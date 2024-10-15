@@ -8,7 +8,7 @@ FPS = 200
 # scale 1m by 1m
 scale = 1
 
-N = 180
+N = 500
 WIDTH, HEIGHT = 800, 800
 RADIUS = 5
 
