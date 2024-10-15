@@ -1,6 +1,7 @@
 import pygame
 import time
 from util import *
+from AppKit import NSApplication, NSApp, NSWindow
 
 FPS = 200
 
@@ -13,6 +14,8 @@ RADIUS = 5
 
 obj_mass = 10  #kg
 obj_size = np.array([50.0, 30.0])  
+
+window_mass = 100000
 
 Rho = 10000 # kg/m^3
 
@@ -37,6 +40,16 @@ pygame.display.set_caption("2D Fluid Simulation")
 clock = pygame.time.Clock()
 
 font = pygame.font.Font(None, 36)
+
+app = NSApplication.sharedApplication()
+
+def get_window_position():
+    window = NSApp().keyWindow()
+    if window is not None:
+        frame = window.frame()
+        x, y = frame.origin.x, frame.origin.y
+        return x, y
+    return None, None
 
 click_start_time = None
 click_duration = 0
@@ -72,6 +85,18 @@ while running:
                 obj_velocities.append(np.zeros(2))
                 obj_forces.append(np.zeros(2))
                 click_start_time = None  
+
+    temp = get_window_position()
+    if temp[0] is not None:
+        window_position[i] = temp
+        last_window_pos = temp
+        i += 1
+    else:
+        window_position[i] = last_window_pos
+    if i == 3:
+        forces = user_force(forces, window_position, dt, window_mass)
+        window_position.fill(0)
+        i = 0
 
 
     velocities = collisions(positions, velocities, forces, masses, radius_m, restitution_particles, k_repulsion)
