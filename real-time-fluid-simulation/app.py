@@ -17,12 +17,17 @@ Nx = Ny = 100
 U = 1
 L = 1
 T = L/U
+u_inlet = 0.5
 rho = 1
 nu = 0.001
 g = 9.8
-max_iters = 5000
-tol = 1e-10
+max_iters = 100
+tol = 1e-6
 alpha = 0.1
+
+x_p = 0.5
+y_p = 0.5
+r = 0.1
 
 total_time = 0
 
@@ -43,7 +48,10 @@ def handle_simulation():
     stop_event = Event()
 
     def simulation_task(sid, stop_event):
-        fluid = Fluid(Nx, Ny, U, L, rho, nu, g=g, max_iters=max_iters, tol=tol, alpha=alpha)
+        fluid = Fluid(Nx, Ny, U, L, rho, nu, u_inlet, g=g, max_iters=max_iters, tol=tol, alpha=alpha)
+        fluid.s, fluid.s_obj, fluid.s_obj_boundary, fluid.s_left, fluid.s_right, fluid.s_up, fluid.s_down = fluid.define_obj(x_p, y_p, r)
+        fluid.u, fluid.v, fluid.p = fluid.apply_boundary_conditions()
+
         while True:
             if stop_event.ready():
                 break
@@ -52,7 +60,7 @@ def handle_simulation():
             v_byte = fluid.v.cpu().numpy().tobytes()
 
             k = fluid.u**2 + fluid.v**2
-            print('k', torch.sum(torch.sqrt(k)))
+            # print('k', torch.sum(torch.sqrt(k)))
 
             p64 = base64.b64encode(p_byte).decode('utf-8')
             u64 = base64.b64encode(u_byte).decode('utf-8')

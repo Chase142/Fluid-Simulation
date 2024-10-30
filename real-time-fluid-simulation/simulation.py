@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 
 class Fluid:
-    def __init__(self, Nx, Ny, U, L, rho, nu, g=9.8, max_iters=10000, tol=1e-8, alpha=0.1, max_dt=0.001, device='cpu'):
+    def __init__(self, Nx, Ny, U, L, rho, nu, u_inlet, g=9.8, max_iters=10000, tol=1e-8, alpha=0.1, max_dt=0.001, device='cpu'):
         '''
         rho: desnsity [kg/m^3]
         nu: kinematic viscosity [m^2/s]
@@ -12,6 +12,8 @@ class Fluid:
         L: Characteristic length [m]
         T: Characteristic time [s]
         P: Characteristic pressure [Pa]
+
+        u_inlet: inlet horizontal velocity
 
         Re: Reynolds number
         Fr: Froude number
@@ -27,6 +29,9 @@ class Fluid:
         y: dimentionless y-coordinate of each grid cell center (Ny+2, Nx+2)
         **for coordinates 0,0 is top left, 1,0 is bottom left, 1,1 is bottom right, 0,1 is top right**
 
+        s: mask of fluid vs object cells
+        ** True for fluid False for objects**
+
         dt: dimentionless time step
         total_time: total dimentionless time the simulation has run for
 
@@ -35,6 +40,10 @@ class Fluid:
         tol: convergence residual tolerance for Jacobi itterations solver. Default is 1e-6
         alpha: safety scale paramter for CFL conditions. Should be between 0 and 1. Default is 1 which is the maximum dt that satisfies the conditions
         max_dt* = max time dimentionless step
+
+        s, s_up, s_down, s_right, s_left: torch.tensor (H, W) ---> boolean masks for non-padding fluid elements. True for non-padding fluid. Flase elsewhere.
+        s_obj: torch tensor (H, W) ---> boolean mask for objects. True for obj & obj padding. Flase everywhere else.
+        s_obj_boundary: torch tensor (H, W) ---> boolean tensor mask for objects padding. True for obj padding. Flase everywhere else.
         '''
         self.device = torch.device(device)
         self.tol = tol
@@ -52,7 +61,10 @@ class Fluid:
         self.P = rho * (U**2) 
 
         self.Re = self.U * self.L / self.nu 
-        self.Fr = self.U / ((self.g*L)**(1/2)) 
+        #self.Fr = self.U / ((self.g*L)**(1/2)) 
+        self.Fr = 100000
+
+        self.u_inlet = u_inlet
 
         self.Nx = Nx
         self.Ny = Ny
@@ -80,11 +92,23 @@ class Fluid:
 
         self.p = torch.zeros((self.Ny, self.Nx), device=self.device, dtype=torch.float32)
 
-        self.p += torch.empty((self.Nx, self.Ny), device=self.device, dtype=torch.float32).uniform_(-0.1, 0.1)
+        self.p += torch.full((self.Nx, self.Ny), self.P, device=self.device, dtype=torch.float32)
 
         self.p = F.pad(self.p, pad=(1, 1, 1, 1), mode='constant', value=0)
 
         self.p = self.p / self.P
+
+        # boolean array mask. True for interior fluid. False for objects & padding 
+        self.s = torch.full((self.Ny, self.Nx), 1, device=self.device, dtype=torch.bool)
+        self.s = F.pad(self.s, pad=(1,1,1,1), mode='constant', value=0)
+        self.s_left = torch.roll(self.s, shifts=-1, dims=1)
+        self.s_right = torch.roll(self.s, shifts=1, dims=1)
+        self.s_up = torch.roll(self.s, shifts=1, dims=0)
+        self.s_down = torch.roll(self.s, shifts=-1, dims=0)
+
+        self.s_obj = torch.zeros_like(self.s, device=self.device, dtype=torch.bool)
+
+        self.s_obj_boundary = torch.zeros_like(self.s, device=self.device, dtype=torch.bool)
 
         self.total_time = 0
         self.dt = self.cfl_condition()
@@ -210,23 +234,23 @@ class Fluid:
         dy2 = self.dy**2
         
         # Compute Laplacian for u using finite differences (only interior points)
-        Left = self.u[1:-1, :-2]
-        Right = self.u[1:-1, 2:]
-        Up = self.u[:-2, 1:-1]
-        Down = self.u[2:, 1:-1]
-        Center = self.u[1:-1, 1:-1]
+        Left = self.u[self.s_left]
+        Right = self.u[self.s_right]
+        Up = self.u[self.s_up]
+        Down = self.u[self.s_down]
+        Center = self.u[self.s]
         laplacian_u = ((Right + Left - (2*Center)) / dx2) + ((Up + Down - (2*Center)) / dy2)
 
-        Left = self.v[1:-1, :-2]
-        Right = self.v[1:-1, 2:]
-        Up = self.v[:-2, 1:-1]
-        Down = self.v[2:, 1:-1]
-        Center = self.v[1:-1, 1:-1]
+        Left = self.v[self.s_left]
+        Right = self.v[self.s_right]
+        Up = self.v[self.s_up]
+        Down = self.v[self.s_down]
+        Center = self.v[self.s]
         laplacian_v = ((Right + Left - (2*Center)) / dx2) + ((Up + Down - (2*Center)) / dy2)
 
         # Update the interior points in place using the explicit Euler method
-        self.u[1:-1, 1:-1] += alpha * laplacian_u
-        self.v[1:-1, 1:-1] += alpha * laplacian_v
+        self.u[self.s] += alpha * laplacian_u
+        self.v[self.s] += alpha * laplacian_v
 
         return self.u, self.v
     
@@ -249,7 +273,7 @@ class Fluid:
         v*: torch.Tensor (H, W) ---> updated vertical velocity field (Ny x Nx) (in-place)
         """
         # Apply gravity downwards [0][0] is top left and y grows as the first index increases so we want to add
-        self.v[1:-1, 1:-1] += (1 / (self.Fr**2)) * self.dt
+        self.v[self.s] += (1 / (self.Fr**2)) * self.dt
 
         return self.v
     
@@ -285,23 +309,23 @@ class Fluid:
         # loop "max_iters" number of times
         for i in range(self.max_iters):
             # calculating the divergence using central differencing
-            div = ((self.u[1:-1, 2:] - self.u[1:-1, :-2]) / (2*self.dx)) + ((self.v[2:, 1:-1] - self.v[:-2, 1:-1]) / (2*self.dy))
+            div = ((self.u[self.s_right] - self.u[self.s_left]) / (2*self.dx)) + ((self.v[self.s_up] - self.v[self.s_down]) / (2*self.dy))
 
             p_old = self.p.clone()
         
             # updating pressure
-            self.p[1:-1, 1:-1] = (1 / (2 * ((1 / (self.dx**2)) + (1 / (self.dy**2))))) * ( ((self.p[1:-1, 2:]+self.p[1:-1, :-2])/(self.dx**2)) + ((self.p[:-2, 1:-1]+self.p[2:, 1:-1])/(self.dy**2)) - div)
+            self.p[self.s] = (1 / (2 * ((1 / (self.dx**2)) + (1 / (self.dy**2))))) * ( ((self.p[self.s_right]+self.p[self.s_left])/(self.dx**2)) + ((self.p[self.s_up]+self.p[self.s_down])/(self.dy**2)) - div)
 
             # apply boundary conditions
             self.p = self.pressure_boundary_conditions(self.p)
 
             # calculates the L2 norm between current and previous step to check for convergence
-            residual = torch.linalg.norm(self.p[1:-1, 1:-1] - p_old[1:-1, 1:-1])
+            residual = torch.linalg.norm(self.p[self.s] - p_old[self.s])
 
             # Checks for convergence
             if residual < self.tol:
                 break
-        print(div.abs().max())
+        # print(div.abs().max())
         return self.p
     
     def pressure_projection(self):
@@ -324,10 +348,13 @@ class Fluid:
         v*: torch.Tensor (H, W) ---> updated vertical velocity field (Ny x Nx) (in-place)
         '''
         # updating velocity fields based on pressure gradient
-        self.u[1:-1, 1:-1] -= ((self.dt / (2 * self.dx)) * (self.p[1:-1, 2:] - self.p[1:-1, :-2]))
-        self.v[1:-1, 1:-1] -= ((self.dt / (2 * self.dy)) * (self.p[2:, 1:-1] - self.p[:-2, 1:-1]))
+        self.u[self.s] -= ((self.dt / (2 * self.dx)) * (self.p[self.s_right] - self.p[self.s_left]))
+        self.v[self.s] -= ((self.dt / (2 * self.dy)) * (self.p[self.s_up] - self.p[self.s_down]))
         
         return self.u, self.v
+    
+    def define_object():
+        pass
     
     def apply_boundary_conditions(self):
         '''
@@ -336,20 +363,23 @@ class Fluid:
         u*: torch.tensor (H, W) ---> horizontal dimentionless velocity field 
         v*: torch.tensor (H, W) ---> vertical dimentionless velocity field
         p*: torch.tensor (H, W) ---> dimentionless pressure field
-        
+
         Boundary conditions
         1) Inlet: 
-            Velocity: Dirichlet boundary condition (no slip: u=v=0)
+            Velocity: Dirichlet boundary conditions (u=u_inlet, v=0)
             Pressure: Neumann boundary condition (zero pressure gradient)
         2) Outlet: 
+            Velocity: Neumann boundary condition (zero velocity gradient)
+            Pressure: Dirichlet boundary condition (zero pressure)
+        3) Bottom: 
             Velocity: Dirichlet boundary condition (no slip: u=v=0)
             Pressure: Neumann boundary condition (zero pressure gradient)
-        3) Bottom: 
-            Velocity:Dirichlet boundary condition (no slip: u=v=0)
-            Pressure: Dirichlet boundary condition (1/Fr**2 at bottom)
         4) Top: 
             Velocity: Dirichlet boundary condition (no slip: u=v=0)
-            Pressure: Dirichlet boundary condition (0 at top)
+            Pressure: Neumann boundary condition (zero pressure gradient)
+        5) Obj surface & Interior:
+            Velocity: Dirichlet boundary conditions (no slip, u=0, v=0)
+            Pressure: Neumann boundary condition (zero pressure gradient)
 
         Returns:
         u*: torch.Tensor (H, W) ---> updated horizontal velocity field (Ny x Nx) (in-place)
@@ -358,21 +388,37 @@ class Fluid:
 
         '''
         # Inlet boundary
-        self.u[:, 0] = 0
+        self.u[:, 0] = self.u_inlet
         self.v[:, 0] = 0
         self.p[:, 0] = self.p[:, 1] 
         # Top
         self.u[0, :] = 0
         self.v[0, :] = 0
-        self.p[0, :] = 0
+        self.p[0, :] = self.p[1, :]
         # Outlet
-        self.u[:, -1] = 0
-        self.v[:, -1] = 0
-        self.p[:, -1] = self.p[:, -2]
+        self.u[:, -1] = self.u[:, -2]
+        self.v[:, -1] = self.v[:, -2]
+        self.p[:, -1] = 0
         # Bottom
         self.u[-1, :] = 0
         self.v[-1, :] = 0
-        self.p[-1, :] = (1 / self.Fr**2)
+        self.p[-1, :] = self.p[-2, :]
+
+        # Objects
+        self.u[self.s_obj] = 0
+        self.v[self.s_obj] = 0
+
+        up = torch.roll(self.p, shifts=1, dims=0)
+        down = torch.roll(self.p, shifts=-1, dims=0)
+        left = torch.roll(self.p, shifts=1, dims=1)
+        right = torch.roll(self.p, shifts=-1, dims=1)
+
+        # self.p[self.s_obj_boundary] = up[self.s_obj_boundary]
+        # self.p[self.s_obj_boundary] = down[self.s_obj_boundary]
+        # self.p[self.s_obj_boundary] = left[self.s_obj_boundary]
+        # self.p[self.s_obj_boundary] = right[self.s_obj_boundary]
+
+        self.p[self.s_obj_boundary] = (up[self.s_obj_boundary] + down[self.s_obj_boundary] + left[self.s_obj_boundary] + right[self.s_obj_boundary]) / 4
 
         return self.u, self.v, self.p
     
@@ -392,25 +438,31 @@ class Fluid:
             Velocity: Dirichlet boundary condition (no slip: u=v=0)
         4) Top: 
             Velocity: Dirichlet boundary condition (no slip: u=v=0)
+        5) Obj surface & Interior:
+            Velocity: Dirichlet boundary conditions (no slip, u=0, v=0)
 
         Returns:
         u*: torch.Tensor (H, W) ---> updated horizontal velocity field (Ny x Nx) (in-place)
         v*: torch.Tensor (H, W) ---> updated vertical velocity field (Ny x Nx) (in-place)
         '''
         # Inlet boundary
-        u[:, 0] = 0
+        u[:, 0] = self.u_inlet
         v[:, 0] = 0
         # Top
         u[0, :] = 0
         v[0, :] = 0
 
         # Outlet
-        u[:, -1] = 0
-        v[:, -1] = 0
+        u[:, -1] = u[:, -2]
+        v[:, -1] = v[:, -2]
 
         # Bottom
         u[-1, :] = 0
         v[-1, :] = 0
+
+        # Object
+        u[self.s_obj] = 0
+        v[self.s_obj] = 0
 
         return u, v
     
@@ -429,6 +481,8 @@ class Fluid:
             Pressure: Dirichlet boundary condition (1/Fr**2 at bottom)
         4) Top: 
             Pressure: Dirichlet boundary condition (0 at top)
+        5) Object:
+            Pressure: Neumann boundary condition (zero pressure gradient)
 
         Returns:
         p*: torch.Tensor (H, W) ---> updated pressure field (Ny x Nx) (in-place)
@@ -436,11 +490,22 @@ class Fluid:
         # Inlet boundary
         p[:, 0] = p[:, 1]
         # Top
-        p[0, :] = 0
+        p[0, :] = p[1, :]
         # Outlet
-        p[:, -1] = p[:, -2]
+        p[:, -1] = 0
         # Bottom
-        p[-1, :] = (1 / self.Fr**2)
+        p[-1, :] = p[-2, :]
+        # Object
+        up = torch.roll(p, shifts=1, dims=0)
+        down = torch.roll(p, shifts=-1, dims=0)
+        left = torch.roll(p, shifts=1, dims=1)
+        right = torch.roll(p, shifts=-1, dims=1)
+
+        # p[self.s_obj_boundary] = up[self.s_obj_boundary]
+        # p[self.s_obj_boundary] = down[self.s_obj_boundary]
+        # p[self.s_obj_boundary] = left[self.s_obj_boundary]
+        # p[self.s_obj_boundary] = right[self.s_obj_boundary]
+        p[self.s_obj_boundary] = (up[self.s_obj_boundary] + down[self.s_obj_boundary] + left[self.s_obj_boundary] + right[self.s_obj_boundary]) / 4
 
         return p
 
@@ -491,6 +556,51 @@ class Fluid:
         # scales dt my the specified safety factor    
         self.dt = min(dt_advection, dt_diffusion, dt_gravity, self.max_dt) * self.alpha
         return self.dt
+    
+    def define_obj(self, x_p, y_p, r):
+        '''
+        adds a circular object centered at the specified x, y point.
+
+        x_p*: float ---> dimentionless x coordinate of object (will egt rounded to nearest grid cell) [0,1]
+        y_p*: float ---> dimentionless y coordinate of object (will egt rounded to nearest grid cell) [0, 1]
+        x*: torch.tensor ((H, W)---> dimensionless grid of the x coordinates for the cneter of each cell
+        y*: torch.tensor (H, W) ---> dimensionless grid of the y coordinates for the center of each cell
+        r*: float ---> radius of object [0, 1]
+        s, s_up, s_down, s_right, s_left: torch.tensor (H, W) ---> boolean masks for non-padding fluid elements. True for non-padding fluid. Flase elsewhere.
+        s_obj: torch tensor (H, W) ---> boolean tensor mask for objects. True for obj & obj padding. Flase everywhere else.
+        s_obj_boundary: torch tensor (H, W) ---> boolean tensor mask for objects padding. True for obj padding. Flase everywhere else.
+
+        returns:
+        s: torch.tensor (updated in place), s_obj (updated in place), s_obj_boundary (updated in place)
+        '''
+
+        x_p = max(min(x_p, 1), 0)
+        y_p = max(min(y_p, 1), 0)
+
+        distance = torch.sqrt((self.x-x_p)**2 + (self.y-y_p)**2)
+
+        obj_mask = distance <= r
+
+        up = torch.roll(obj_mask, shifts=1, dims=0)
+        down = torch.roll(obj_mask, shifts=-1, dims=0)
+        left = torch.roll(obj_mask, shifts=1, dims=1)
+        right = torch.roll(obj_mask, shifts=-1, dims=1)
+
+        boundary_mask = (~obj_mask) & (up | down | left | right)
+
+        self.s[obj_mask] = False
+        self.s[boundary_mask] = False
+        self.s_obj[obj_mask] = True
+        self.s_obj[boundary_mask] = True
+        self.s_obj_boundary[boundary_mask] = True
+
+        self.s_left = torch.roll(self.s, shifts=-1, dims=1)
+        self.s_right = torch.roll(self.s, shifts=1, dims=1)
+        self.s_up = torch.roll(self.s, shifts=1, dims=0)
+        self.s_down = torch.roll(self.s, shifts=-1, dims=0)
+
+        return self.s, self.s_obj, self.s_obj_boundary, self.s_left, self.s_right, self.s_up, self.s_down
+
     
     def update(self):
         '''
