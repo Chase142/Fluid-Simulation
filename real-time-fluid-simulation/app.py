@@ -121,5 +121,9 @@ def handle_disconnect():
     else:
         print(f"No simulation found for SID {sid} on disconnect.")
 
+@socketio.on('mouse_move')
+def handle_mouse_move(position):
+    print(f"data received")
+
 if __name__ == '__main__':
     socketio.run(app, debug=True)

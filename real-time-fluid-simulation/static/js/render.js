@@ -5,6 +5,10 @@ window.onload = function() {
     socket.emit('start_simulation');
 };
 
+window.onmousemove = function() {
+    socket.emit('mouse_move')
+}
+
 document.getElementById("plots").addEventListener("change", function () {
     selectedPlot = this.value;
     plotInitialized = false
