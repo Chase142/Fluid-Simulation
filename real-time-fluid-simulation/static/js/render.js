@@ -5,9 +5,9 @@ window.onload = function() {
     socket.emit('start_simulation');
 };
 
-window.onmousemove = function() {
-    socket.emit('mouse_move')
-}
+// window.onmousemove = function() {
+//     socket.emit('mouse_move', window.onmousemove.arguments)
+// }
 
 document.getElementById("plots").addEventListener("change", function () {
     selectedPlot = this.value;

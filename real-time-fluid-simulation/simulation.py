@@ -189,7 +189,7 @@ class Fluid:
         uv_p_stack = uv_p_stack.unsqueeze(0)
         
         # using pytorch's grid sample method to perform bilinear interpolation at predicted points
-        uv_a_stack = F.grid_sample(uv_p_stack, xy_a_grid_norm, mode='bilinear', padding_mode='zeros', align_corners=True).squeeze()
+        uv_a_stack = F.grid_sample(uv_p_stack, xy_a_grid_norm, mode='bilinear', padding_mode='border', align_corners=True).squeeze()
         u_a = uv_a_stack[0]
         v_a = uv_a_stack[1]
 
