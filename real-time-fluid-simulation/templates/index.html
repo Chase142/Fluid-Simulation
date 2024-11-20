@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fluid Simulation - Wing Designer</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/style.css') }}">
 </head>
 <body>
     <h1>Fluid Simulation - Wing Designer</h1>
@@ -18,7 +18,7 @@
         </div>
     </div>
 
-    <script src="socket.io.js"></script>
-    <script src="render.js"></script>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='/js/render.js') }}"></script>
 </body>
 </html>
