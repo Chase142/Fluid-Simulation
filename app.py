@@ -38,7 +38,7 @@ omega1 = dt/tau
 omega2 = 1-omega1
 omega = np.array([omega1, omega2])
 
-STEPS_PER_UPDATE = 1
+STEPS_PER_UPDATE = 100
 
 # Lattice velocities & speed of sound
 c = np.array([[0,0], [1,0], [0,1], [-1,0], [0,-1], [1,1], [-1, 1], [-1,-1], [1,-1]])
@@ -133,7 +133,11 @@ def handle_simulation():
 
             f, rho, u = update(f, f_eq, f_star, rho, u, u0, c, cT, ceq, w, q, N, Ny, Nx, omega, indexes, boundary_nodes, opposite_directions, STEPS_PER_UPDATE)
 
-            payload = u.tolist()
+            vSq = u[0]**2 + u[1]**2
+            
+            vSq = vSq / np.max(vSq)
+
+            payload = vSq.tolist()
 
             socketio.emit('simulation_update', payload, room=sid)
 

@@ -74,6 +74,35 @@
         </div>
     </div>
 
+    <script id="heatVert" type="x-shader/x-vertex">
+        attribute vec2 dimensions;
+        attribute vec2 position;  // Vertex position (x, y)
+        attribute float intensity; // Intensity of the point
+  
+        varying vec4 v_color;
+        
+        void main() {
+  
+        // Set vertex position: vec4(X, Y, Z, 1.0)
+        gl_Position = vec4(position.y, position.x, 0.0, 1.0);
+  
+        //gl_PointSize = 5.0;
+  
+        v_color = vec4(intensity, 0.0, 0.0, 1.0);
+      }
+      </script>
+      <script id="heatFrag" type="x-shader/x-fragment">
+        precision mediump float;
+  
+        varying vec4 v_color;
+  
+        void main() {
+        
+          // Set fragment color: vec4(r, g, b, alpha)
+          gl_FragColor = v_color;
+        }
+      </script>
+
     <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script src="{{ url_for('static', filename='/js/render.js') }}"></script>
 </body>
