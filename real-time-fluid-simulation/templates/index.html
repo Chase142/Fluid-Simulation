@@ -11,10 +11,65 @@
     <div id="simulation-container">
         <canvas id="drawingCanvas" width="800" height="600"></canvas>
         <div id="controls">
+            <!-- Existing Controls -->
             <button id="clearCanvas">Clear Canvas</button>
             <button id="startSimulation">Start Simulation</button>
             <label for="param1">Inlet Velocity:</label>
             <input type="number" id="param1" value="0.5" step="0.1" min="0">
+
+            <!-- New Controls -->
+            <label for="flowSpeed">Flow Speed:</label>
+            <input type="range" id="flowSpeed" min="0" max="1" step="0.01" value="0.1">
+
+            <label for="viscosity">Viscosity:</label>
+            <input type="range" id="viscosity" min="0" max="1" step="0.01" value="0.02">
+
+            <button id="resetFluid">Reset Fluid</button>
+
+            <label for="drawBarriers">Draw Barriers:</label>
+            <select id="drawBarriers">
+                <option value="draw">Draw Barriers</option>
+                <option value="erase">Erase Barriers</option>
+                <option value="drag">Drag Fluid</option>
+            </select>
+
+            <label for="barrierShapes">Barrier Shapes:</label>
+            <select id="barrierShapes">
+                <option value="default">Barrier Shapes</option>
+                <option value="shortLine">Short Line</option>
+                <option value="longLine">Long Line</option>
+                <option value="diagonal">Diagonal</option>
+                <option value="shallowDiagonal">Shallow Diagonal</option>
+                <option value="smallCircle">Small Circle</option>
+                <option value="largeCircle">Large Circle</option>
+                <option value="lineWithSpoiler">Line with Spoiler</option>
+                <option value="circleWithSpoiler">Circle with Spoiler</option>
+                <option value="rightAngle">Right Angle</option>
+                <option value="wedge">Wedge</option>
+                <option value="airfoil">Airfoil</option>
+            </select>
+
+            <label for="plotCurl">Plot Curl:</label>
+            <select id="plotCurl">
+                <option value="curl">Plot Curl</option>
+                <option value="speed">Plot Speed</option>
+                <option value="density">Plot Density</option>
+                <option value="xVelocity">Plot X Velocity</option>
+                <option value="yVelocity">Plot Y Velocity</option>
+            </select>
+
+            <label for="contrast">Contrast:</label>
+            <input type="range" id="contrast" min="0" max="1" step="0.01" value="0.5">
+
+            <div id="checkboxes">
+                <label><input type="checkbox" id="tracers"> Tracers</label>
+                <label><input type="checkbox" id="flowlines"> Flowlines</label>
+                <label><input type="checkbox" id="forceOnBarriers"> Force on Barriers</label>
+                <label><input type="checkbox" id="sensor"> Sensor</label>
+                <label><input type="checkbox" id="data"> Data</label>
+            </div>
+
+            <button id="clearBarriers">Clear Barriers</button>
         </div>
     </div>
 
