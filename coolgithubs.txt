@@ -1,5 +1,0 @@
-https://github.com/takah29/2d-fluid-simulato
-https://github.com/VHeusinkveld/2D_Incompressible_NV_Solver-CP4
-https://github.com/isl-org/DeepLagrangianFluids
-https://github.com/fbertola/Natrix/tree/master
-https://github.com/luo-yining/CFDBench/tree/main
