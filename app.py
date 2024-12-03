@@ -1,11 +1,8 @@
 import eventlet
 eventlet.monkey_patch()
 import numpy as np
-import numba as nb
 from simulation import *
-import codecs, json 
 from eventlet.event import Event
-import base64
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO
 
