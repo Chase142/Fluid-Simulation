@@ -11,7 +11,7 @@
 <body>
     <h1>Fluid Simulation - Wing Designer</h1>
     <div id="simulation-container">
-        <canvas id="drawingCanvas" width="800" height="600"></canvas>
+        <canvas id="drawingCanvas" width="800" height="200"></canvas>
         <div id="controls">
             <!-- Existing and New Controls -->
             <button id="clearCanvas">Clear Canvas</button>
@@ -77,7 +77,8 @@
     <script id="heatVert" type="x-shader/x-vertex">
         attribute vec2 dimensions;
         attribute vec2 position;  // Vertex position (x, y)
-        attribute float intensity; // Intensity of the point
+        attribute float velocity; // Normed velocity
+        attribute float pressure; // Normed pressure
   
         varying vec4 v_color;
         
@@ -88,7 +89,7 @@
   
         //gl_PointSize = 5.0;
   
-        v_color = vec4(intensity, 0.0, 0.0, 1.0);
+        v_color = vec4(velocity, 0.0, pressure, 1.0);
       }
       </script>
       <script id="heatFrag" type="x-shader/x-fragment">

@@ -137,7 +137,9 @@ def handle_simulation():
             
             vSq = vSq / np.max(vSq)
 
-            payload = vSq.tolist()
+            rhoNorm = rho / np.max(rho)
+
+            payload = [vSq.tolist(), rhoNorm.tolist()]
 
             socketio.emit('simulation_update', payload, room=sid)
 

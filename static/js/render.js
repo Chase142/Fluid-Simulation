@@ -14,9 +14,6 @@ if (gl === null) {
 let drawing = false;
 let points = [];
 
-
-
-
 function decodeSimulationData(data) {
     // const { p, u, v, metadata } = data;
     // const { shape, dtype } = metadata;
@@ -75,8 +72,8 @@ function getMax(a){
   }
 
 function visualizeSimulation(data) {
-    const width = data.length;
-    const height = data[0].length;
+    const width = data[0].length;
+    const height = data[0][0].length;
 
     const posI = []
 
@@ -84,29 +81,33 @@ function visualizeSimulation(data) {
         for (let j = 0; j < height - 1; j++){
             posI.push(indexToCoord(i + 1, width));
             posI.push(indexToCoord(j, height));
-            posI.push(data[i + 1][j]);
-
-            console.log(data[i][j])
+            posI.push(data[0][i + 1][j]);
+            posI.push(data[1][i + 1][j]);
 
             posI.push(indexToCoord(i, width));
             posI.push(indexToCoord(j, height));
-            posI.push(data[i][j]);
+            posI.push(data[0][i][j]);
+            posI.push(data[1][i][j]);
 
             posI.push(indexToCoord(i, width));
             posI.push(indexToCoord(j + 1, height));
-            posI.push(data[i][j + 1]);
+            posI.push(data[0][i][j + 1]);
+            posI.push(data[1][i][j + 1]);
 
             posI.push(indexToCoord(i, width));
             posI.push(indexToCoord(j + 1, height));
-            posI.push(data[i][j + 1]);
+            posI.push(data[0][i][j + 1]);
+            posI.push(data[1][i][j + 1]);
 
             posI.push(indexToCoord(i + 1, width));
             posI.push(indexToCoord(j + 1, height));
-            posI.push(data[i + 1][j + 1]);
+            posI.push(data[0][i + 1][j + 1]);
+            posI.push(data[1][i + 1][j + 1]);
 
             posI.push(indexToCoord(i + 1, width));
             posI.push(indexToCoord(j, height));
-            posI.push(data[i + 1][j]);
+            posI.push(data[0][i + 1][j]);
+            posI.push(data[1][i + 1][j]);
         }
     }
 
@@ -130,22 +131,32 @@ function visualizeSimulation(data) {
       2,          // interleaved data size
       gl.FLOAT,   // type
       false,      // normalize
-      FSIZE * 3,  // stride (chunk size)
+      FSIZE * 4,  // stride (chunk size)
       0           // offset (position of interleaved data in chunk) 
     );
     gl.enableVertexAttribArray(position);
 
-    // Bind the intensity to the 3rd element
-    var intensity = gl.getAttribLocation(program, 'intensity');
+    var velo = gl.getAttribLocation(program, 'velocity');
     gl.vertexAttribPointer(
-        intensity,      // target
+        velo,      // target
       1,          // interleaved chunk size
       gl.FLOAT,   // type
       false,      // normalize
-      FSIZE * 3,  // stride
+      FSIZE * 4,  // stride
       FSIZE * 2   // offset
     );
-    gl.enableVertexAttribArray(intensity);
+    gl.enableVertexAttribArray(velo);
+
+    var pressure = gl.getAttribLocation(program, 'pressure');
+    gl.vertexAttribPointer(
+        pressure,      // target
+      1,          // interleaved chunk size
+      gl.FLOAT,   // type
+      false,      // normalize
+      FSIZE * 4,  // stride
+      FSIZE * 3   // offset
+    );
+    gl.enableVertexAttribArray(pressure);
 
     // Set the clear color
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -154,7 +165,7 @@ function visualizeSimulation(data) {
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     // Render
-    var numVerts = (width - 1) * (height - 1) * 6
+    var numVerts = width * height * 6
     gl.drawArrays(gl.TRIANGLES, 0, numVerts);
 
     // ctx.putImageData(imgData, 0, 0);
