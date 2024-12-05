@@ -14,162 +14,169 @@ if (gl === null) {
 let drawing = false;
 let points = [];
 
-function decodeSimulationData(data) {
-    // const { p, u, v, metadata } = data;
-    // const { shape, dtype } = metadata;
-
-    // const pArrayBuffer = Uint8Array.from(atob(p), c => c.charCodeAt(0)).buffer;
-    // const uArrayBuffer = Uint8Array.from(atob(u), c => c.charCodeAt(0)).buffer;
-    // const vArrayBuffer = Uint8Array.from(atob(v), c => c.charCodeAt(0)).buffer;
-
-    // const pData = new Float32Array(pArrayBuffer);
-    // const uData = new Float32Array(uArrayBuffer);
-    // const vData = new Float32Array(vArrayBuffer);
-
-    visualizeSimulation(data);
-}
-
-
-// Compile a WebGL program from a vertex shader and a fragment shader
-compile = (gl, vshader, fshader) => {
-    // Compile vertex shader
-    var vs = gl.createShader(gl.VERTEX_SHADER);
-    gl.shaderSource(vs, vshader);
-    gl.compileShader(vs);
-    
-    // Compile fragment shader
-    var fs = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(fs, fshader);
-    gl.compileShader(fs);
-    
-    // Create and launch the WebGL program
-    var program = gl.createProgram();
-    gl.attachShader(program, vs);
-    gl.attachShader(program, fs);
-    gl.linkProgram(program);
-    gl.useProgram(program);
-    
-    // Log errors (optional)
-    console.log('vertex shader:', gl.getShaderInfoLog(vs) || 'OK');
-    console.log('fragment shader:', gl.getShaderInfoLog(fs) || 'OK');
-    console.log('program:', gl.getProgramInfoLog(program) || 'OK');
-    
-    return program;
-  }
-
 var heatFragCode = document.getElementById("heatFrag").textContent;
 var heatVertCode = document.getElementById("heatVert").textContent;
+const heatmap = new Heatmap(canvas, 80, 200, heatVertCode, heatFragCode);
+// Set the clear color
+gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-// Compile program
-var program = compile(gl, heatVertCode, heatFragCode);
+// Clear canvas
+gl.clear(gl.COLOR_BUFFER_BIT);
+heatmap.drawData();
 
-indexToCoord = (idx, size) => {
-    return 2 * (idx / size) - 1;
-}
-
-function getMax(a){
-    return Math.max(...a.map(e => Array.isArray(e) ? getMax(e) : e));
-  }
-
-function visualizeSimulation(data) {
-    const width = data[0].length;
-    const height = data[0][0].length;
-
-    const posI = []
-
-    for (let i = 0; i < width - 1; i++) {
-        for (let j = 0; j < height - 1; j++){
-            posI.push(indexToCoord(i + 1, width));
-            posI.push(indexToCoord(j, height));
-            posI.push(data[0][i + 1][j]);
-            posI.push(data[1][i + 1][j]);
-
-            posI.push(indexToCoord(i, width));
-            posI.push(indexToCoord(j, height));
-            posI.push(data[0][i][j]);
-            posI.push(data[1][i][j]);
-
-            posI.push(indexToCoord(i, width));
-            posI.push(indexToCoord(j + 1, height));
-            posI.push(data[0][i][j + 1]);
-            posI.push(data[1][i][j + 1]);
-
-            posI.push(indexToCoord(i, width));
-            posI.push(indexToCoord(j + 1, height));
-            posI.push(data[0][i][j + 1]);
-            posI.push(data[1][i][j + 1]);
-
-            posI.push(indexToCoord(i + 1, width));
-            posI.push(indexToCoord(j + 1, height));
-            posI.push(data[0][i + 1][j + 1]);
-            posI.push(data[1][i + 1][j + 1]);
-
-            posI.push(indexToCoord(i + 1, width));
-            posI.push(indexToCoord(j, height));
-            posI.push(data[0][i + 1][j]);
-            posI.push(data[1][i + 1][j]);
-        }
-    }
-
-    var posBuffer = new Float32Array(posI);
-
-    // console.log(posBuffer[0]);
-    // console.log(posBuffer[1]);
-    // console.log(posBuffer[2]);
-
-    // Get the size of each float in bytes (4)
-    var FSIZE = posBuffer.BYTES_PER_ELEMENT;
-
-    // Create a buffer object
-    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-    gl.bufferData(gl.ARRAY_BUFFER, posBuffer, gl.STREAM_DRAW);
-
-    // Bind the attribute position to the 1st, 2nd
-    var position = gl.getAttribLocation(program, 'position');
-    gl.vertexAttribPointer(
-      position,   // target
-      2,          // interleaved data size
-      gl.FLOAT,   // type
-      false,      // normalize
-      FSIZE * 4,  // stride (chunk size)
-      0           // offset (position of interleaved data in chunk) 
-    );
-    gl.enableVertexAttribArray(position);
-
-    var velo = gl.getAttribLocation(program, 'velocity');
-    gl.vertexAttribPointer(
-        velo,      // target
-      1,          // interleaved chunk size
-      gl.FLOAT,   // type
-      false,      // normalize
-      FSIZE * 4,  // stride
-      FSIZE * 2   // offset
-    );
-    gl.enableVertexAttribArray(velo);
-
-    var pressure = gl.getAttribLocation(program, 'pressure');
-    gl.vertexAttribPointer(
-        pressure,      // target
-      1,          // interleaved chunk size
-      gl.FLOAT,   // type
-      false,      // normalize
-      FSIZE * 4,  // stride
-      FSIZE * 3   // offset
-    );
-    gl.enableVertexAttribArray(pressure);
-
+function decodeSimulationData(data) {
     // Set the clear color
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
     // Clear canvas
     gl.clear(gl.COLOR_BUFFER_BIT);
-
-    // Render
-    var numVerts = width * height * 6
-    gl.drawArrays(gl.TRIANGLES, 0, numVerts);
-
-    // ctx.putImageData(imgData, 0, 0);
+    heatmap.updateData(data[0], data[1]);
+    heatmap.drawData();
 }
+
+
+// Compile a WebGL program from a vertex shader and a fragment shader
+// compile = (gl, vshader, fshader) => {
+//     // Compile vertex shader
+//     var vs = gl.createShader(gl.VERTEX_SHADER);
+//     gl.shaderSource(vs, vshader);
+//     gl.compileShader(vs);
+    
+//     // Compile fragment shader
+//     var fs = gl.createShader(gl.FRAGMENT_SHADER);
+//     gl.shaderSource(fs, fshader);
+//     gl.compileShader(fs);
+    
+//     // Create and launch the WebGL program
+//     var program = gl.createProgram();
+//     gl.attachShader(program, vs);
+//     gl.attachShader(program, fs);
+//     gl.linkProgram(program);
+//     gl.useProgram(program);
+    
+//     // Log errors (optional)
+//     console.log('vertex shader:', gl.getShaderInfoLog(vs) || 'OK');
+//     console.log('fragment shader:', gl.getShaderInfoLog(fs) || 'OK');
+//     console.log('program:', gl.getProgramInfoLog(program) || 'OK');
+    
+//     return program;
+//   }
+
+// var heatFragCode = document.getElementById("heatFrag").textContent;
+// var heatVertCode = document.getElementById("heatVert").textContent;
+
+// // Compile program
+// var program = compile(gl, heatVertCode, heatFragCode);
+
+// indexToCoord = (idx, size) => {
+//     return 2 * (idx / size) - 1;
+// }
+
+// console.log(new Heatmap(gl, 800, 200, heatVertCode, heatFragCode));
+
+// function getMax(a){
+//     return Math.max(...a.map(e => Array.isArray(e) ? getMax(e) : e));
+//   }
+
+// function visualizeSimulation(data) {
+//     const width = data[0].length;
+//     const height = data[0][0].length;
+
+//     const posI = []
+
+//     for (let i = 0; i < width - 1; i++) {
+//         for (let j = 0; j < height - 1; j++){
+//             posI.push(indexToCoord(i + 1, width));
+//             posI.push(indexToCoord(j, height));
+//             posI.push(data[0][i + 1][j]);
+//             posI.push(data[1][i + 1][j]);
+
+//             posI.push(indexToCoord(i, width));
+//             posI.push(indexToCoord(j, height));
+//             posI.push(data[0][i][j]);
+//             posI.push(data[1][i][j]);
+
+//             posI.push(indexToCoord(i, width));
+//             posI.push(indexToCoord(j + 1, height));
+//             posI.push(data[0][i][j + 1]);
+//             posI.push(data[1][i][j + 1]);
+
+//             posI.push(indexToCoord(i, width));
+//             posI.push(indexToCoord(j + 1, height));
+//             posI.push(data[0][i][j + 1]);
+//             posI.push(data[1][i][j + 1]);
+
+//             posI.push(indexToCoord(i + 1, width));
+//             posI.push(indexToCoord(j + 1, height));
+//             posI.push(data[0][i + 1][j + 1]);
+//             posI.push(data[1][i + 1][j + 1]);
+
+//             posI.push(indexToCoord(i + 1, width));
+//             posI.push(indexToCoord(j, height));
+//             posI.push(data[0][i + 1][j]);
+//             posI.push(data[1][i + 1][j]);
+//         }
+//     }
+
+//     var posBuffer = new Float32Array(posI);
+
+//     // console.log(posBuffer[0]);
+//     // console.log(posBuffer[1]);
+//     // console.log(posBuffer[2]);
+
+//     // Get the size of each float in bytes (4)
+//     var FSIZE = posBuffer.BYTES_PER_ELEMENT;
+
+//     // Create a buffer object
+//     gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+//     gl.bufferData(gl.ARRAY_BUFFER, posBuffer, gl.STREAM_DRAW);
+
+//     // Bind the attribute position to the 1st, 2nd
+//     var position = gl.getAttribLocation(program, 'position');
+//     gl.vertexAttribPointer(
+//       position,   // target
+//       2,          // interleaved data size
+//       gl.FLOAT,   // type
+//       false,      // normalize
+//       FSIZE * 4,  // stride (chunk size)
+//       0           // offset (position of interleaved data in chunk) 
+//     );
+//     gl.enableVertexAttribArray(position);
+
+//     var velo = gl.getAttribLocation(program, 'velocity');
+//     gl.vertexAttribPointer(
+//         velo,      // target
+//       1,          // interleaved chunk size
+//       gl.FLOAT,   // type
+//       false,      // normalize
+//       FSIZE * 4,  // stride
+//       FSIZE * 2   // offset
+//     );
+//     gl.enableVertexAttribArray(velo);
+
+//     var pressure = gl.getAttribLocation(program, 'pressure');
+//     gl.vertexAttribPointer(
+//         pressure,      // target
+//       1,          // interleaved chunk size
+//       gl.FLOAT,   // type
+//       false,      // normalize
+//       FSIZE * 4,  // stride
+//       FSIZE * 3   // offset
+//     );
+//     gl.enableVertexAttribArray(pressure);
+
+//     // Set the clear color
+//     gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+//     // Clear canvas
+//     gl.clear(gl.COLOR_BUFFER_BIT);
+
+//     // Render
+//     var numVerts = width * height * 6
+//     gl.drawArrays(gl.TRIANGLES, 0, numVerts);
+
+//     // ctx.putImageData(imgData, 0, 0);
+// }
 
 // Drawing functionality
 canvas.addEventListener('mousedown', () => {

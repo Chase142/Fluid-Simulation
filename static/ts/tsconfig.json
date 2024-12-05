@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+      "module": "ESNext",
+      "target": "ES5",
+      "outDir": "../js",
+      "strict": true
+    },
+    "files": [
+      "heatmap.ts"
+    ]
+  }
