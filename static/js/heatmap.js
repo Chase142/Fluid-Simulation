@@ -120,7 +120,11 @@ var Heatmap = /** @class */ (function () {
     Heatmap.prototype.drawData = function () {
         var gl = this.gl;
         // Draw the geometry
-        var numVerts = this.width * this.height * 6;
+        var numVerts = (this.width - 1) * (this.height - 1) * 6;
+        // console.log("NumPosPress");
+        // console.log(numVerts);
+        // console.log(this.positionData.length);
+        // console.log(this.pressureData.length);
         gl.drawArrays(gl.TRIANGLES, 0, numVerts);
     };
     Heatmap.prototype.interleave2d = function (arr) {
