@@ -37,7 +37,7 @@ function decodeSimulationData(data) {
 }
 
 // Drawing functionality
-canvas.addEventListener('mousedown', () => {
+document.addEventListener('mousedown', () => {
     drawing = true;
     points = [];
 });
@@ -48,18 +48,18 @@ canvas.addEventListener('mousemove', (event) => {
         const x = (event.clientX - rect.left) / canvas.width;
         const y = (event.clientY - rect.top) / canvas.height;
         points.push({ x, y });
+        console.log(points);
     }
 });
 
-canvas.addEventListener('mouseup', () => {
+document.addEventListener('mouseup', () => {
     drawing = false;
 });
 
 document.getElementById('clearCanvas').addEventListener('click', () => {
     // ctx.clearRect(0, 0, canvas.width, canvas.height);
-    gl
     points = [];
-    alert('Cleared canvas not immplemented yet');
+    alert('Cleared canvas not implemented yet');
 });
 
 document.getElementById('clearBarriers').addEventListener('click', () => {

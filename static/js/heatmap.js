@@ -25,10 +25,10 @@ var Heatmap = /** @class */ (function () {
     }
     Heatmap.prototype.initPositions = function () {
         var posI = [];
-        var width = this.width;
-        var height = this.height;
-        for (var i = 0; i < this.width - 1; i++) {
-            for (var j = 0; j < this.height - 1; j++) {
+        var width = this.width - 1;
+        var height = this.height - 1;
+        for (var i = 0; i < this.width; i++) {
+            for (var j = 0; j < this.height; j++) {
                 posI.push(this.indexToCoord(i + 1, width));
                 posI.push(this.indexToCoord(j, height));
                 posI.push(this.indexToCoord(i, width));
@@ -120,17 +120,13 @@ var Heatmap = /** @class */ (function () {
     Heatmap.prototype.drawData = function () {
         var gl = this.gl;
         // Draw the geometry
-        var numVerts = (this.width - 1) * (this.height - 1) * 6;
-        // console.log("NumPosPress");
-        // console.log(numVerts);
-        // console.log(this.positionData.length);
-        // console.log(this.pressureData.length);
+        var numVerts = this.width * this.height * 6;
         gl.drawArrays(gl.TRIANGLES, 0, numVerts);
     };
     Heatmap.prototype.interleave2d = function (arr) {
         var interleaved = [];
         for (var i = 0; i < arr.length - 1; i++) {
-            for (var j = 0; j < arr[0].length - 1; j++) {
+            for (var j = 0; j < arr[0].length; j++) {
                 interleaved.push(arr[i + 1][j]);
                 interleaved.push(arr[i][j]);
                 interleaved.push(arr[i][j + 1]);
