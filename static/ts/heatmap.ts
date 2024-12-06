@@ -41,11 +41,11 @@ class Heatmap {
   private initPositions(){
     
     const posI : number[] = []
-    const width = this.width;
-    const height = this.height;
+    const width = this.width - 1;
+    const height = this.height - 1;
 
-    for (let i = 0; i < this.width - 1; i++) {
-        for (let j = 0; j < this.height - 1; j++){
+    for (let i = 0; i < this.width; i++) {
+        for (let j = 0; j < this.height; j++){
             posI.push(this.indexToCoord(i + 1, width));
             posI.push(this.indexToCoord(j, height));
 
@@ -165,7 +165,7 @@ class Heatmap {
     var interleaved : number[] = []
 
     for (let i = 0; i < arr.length - 1; i++) {
-      for (let j = 0; j < arr[0].length - 1; j++){
+      for (let j = 0; j < arr[0].length; j++){
           interleaved.push(arr[i + 1][j]);
           interleaved.push(arr[i][j]);
           interleaved.push(arr[i][j + 1]);
