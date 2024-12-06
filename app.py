@@ -83,7 +83,6 @@ for i in range(q):
 
 # Pre-calculating solid & solid bounce backs
 solid = np.zeros((Ny, Nx), dtype=bool)
-boundary_nodes = np.zeros((q, Ny, Nx), dtype=bool)
 
 # Square
 # solid = np.where((X > (Nx // 12)) & (X < ((Nx*2)// 12)) & (Y > (Ny // 3)) & (Y < ((Ny*2)// 3)), True, False)
@@ -99,11 +98,26 @@ solid = np.where((distances < circle_radius), True, False)
 # wall_height = 8
 # solid[:, Ny//2] = np.where((Y[:, Ny//2]<int((Ny//2)+wall_height)) & (Y[:, Ny//2]>int((Ny//2)-wall_height)), True, False)
 
-for i in range(q):
-    streamed = np.roll(solid, shift=-c[i, 0], axis=1)
-    streamed = np.roll(streamed, shift=-c[i, 1], axis=0)
-    boundary_nodes[i] = (streamed==True) & (solid==False)
+# def applyBrush(points, rad):
+#     print(points)
+#     solidArr = np.zeros((Ny, Nx), dtype=bool)
+#     distances = np.sqrt((X- points[0] * Nx)**2 + (Y-points[0] * Ny)**2)
+#     # print(distances)
+#     solid = np.where((distances < circle_radius), True, False)
+    
 
+def createSolid(boolArr):
+    boundary_nodes = np.zeros((q, Ny, Nx), dtype=bool)
+    for i in range(q):
+        streamed = np.roll(solid, shift=-c[i, 0], axis=1)
+        streamed = np.roll(streamed, shift=-c[i, 1], axis=0)
+        boundary_nodes[i] = (streamed==True) & (solid==False)
+        
+    return boundary_nodes
+    
+    
+
+boundary_nodes = createSolid(solid)
 
 # Initialize distributions (steady flow right)
 u[0] += u0
@@ -116,21 +130,25 @@ def index():
     return render_template('index.html')
 
 @socketio.on('start_simulation')
-def handle_simulation():
+def handle_simulation(params):
     sid = request.sid 
 
     if sid in connections:
         connections[sid]['stop_event'].send('stop')
         print(f"Previous simulation for SID {sid} has been stopped.")
 
+    # applyBrush(params["brushPoints"], params["brushRadius"])
+
     stop_event = Event()
+    
+    # u0 = params["inletVelocity"]
 
     def simulation_task(sid, stop_event):
         global f, rho, u
         while True:
             if stop_event.ready():
                 break
-
+            
             f, rho, u = update(f, f_eq, f_star, rho, u, u0, c, cT, ceq, w, q, N, Ny, Nx, omega, indexes, boundary_nodes, opposite_directions, STEPS_PER_UPDATE)
 
             vSq = u[0]**2 + u[1]**2
@@ -153,6 +171,16 @@ def handle_simulation():
         'greenlet': simulation_greenlet,
         'stop_event': stop_event,
     }
+
+@socketio.on('param_update')
+def handle_update(params):
+    global u0, omega
+    u0 = params["inletVelocity"]
+    tau = params["tau"]
+    omega1 = dt/tau
+    omega2 = 1-omega1
+    omega = np.array([omega1, omega2])
+    # print(omega)
 
 @socketio.on('stop_simulation')
 def handle_stop():

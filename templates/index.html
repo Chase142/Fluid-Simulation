@@ -11,66 +11,26 @@
 <body>
     <h1>Fluid Simulation - Wing Designer</h1>
     <div id="simulation-container">
-        <canvas id="drawingCanvas" width="800" height="200"></canvas>
+        <canvas id="drawingCanvas" width="800" height="320"></canvas>
         <div id="controls">
-            <!-- Existing and New Controls -->
-            <button id="clearCanvas">Clear Canvas</button>
+            <!-- Updated Buttons -->
             <button id="startSimulation">Start Simulation</button>
-            <label for="param1">Inlet Velocity:</label>
-            <input type="number" id="param1" value="0.5" step="0.1" min="0">
-
-            <label for="flowSpeed">Flow Speed:</label>
-            <input type="range" id="flowSpeed" min="0" max="1" step="0.01" value="0.1">
-
+            <button id="stopSimulation">Stop Simulation</button>
+            <button id="clearCanvas">Clear Canvas</button>
+            <label for="inletVelocity">Inlet Velocity:</label>
+            <input type="range" id="inletVelocity" min="0.01" max="0.2" step="0.01" value="0.125">
             <label for="viscosity">Viscosity:</label>
-            <input type="range" id="viscosity" min="0" max="1" step="0.01" value="0.02">
-
-            <button id="resetFluid">Reset Fluid</button>
-
-            <label for="drawBarriers">Draw Barriers:</label>
-            <select id="drawBarriers">
-                <option value="draw">Draw Barriers</option>
-                <option value="erase">Erase Barriers</option>
-                <option value="drag">Drag Fluid</option>
+            <input type="range" id="viscosity" min="0.51" max="0.93" step="0.01" value="0.565">
+            <label for="resolution">Resolution (Nx, Ny):</label>
+            <input type="number" id="nx" placeholder="Nx" min="1" value="200">
+            <input type="number" id="ny" placeholder="Ny" min="1" value="80">
+            <label for="shape">Draw Shape:</label>
+            <select id="shape">
+                <option value="none">None</option>
+                <option value="square">Square</option>
+                <option value="circle">Circle</option>
+                <option value="line">Line</option>
             </select>
-
-            <label for="barrierShapes">Barrier Shapes:</label>
-            <select id="barrierShapes">
-                <option value="default">Barrier Shapes</option>
-                <option value="shortLine">Short Line</option>
-                <option value="longLine">Long Line</option>
-                <option value="diagonal">Diagonal</option>
-                <option value="shallowDiagonal">Shallow Diagonal</option>
-                <option value="smallCircle">Small Circle</option>
-                <option value="largeCircle">Large Circle</option>
-                <option value="lineWithSpoiler">Line with Spoiler</option>
-                <option value="circleWithSpoiler">Circle with Spoiler</option>
-                <option value="rightAngle">Right Angle</option>
-                <option value="wedge">Wedge</option>
-                <option value="airfoil">Airfoil</option>
-            </select>
-
-            <label for="plotCurl">Plot Curl:</label>
-            <select id="plotCurl">
-                <option value="curl">Plot Curl</option>
-                <option value="speed">Plot Speed</option>
-                <option value="density">Plot Density</option>
-                <option value="xVelocity">Plot X Velocity</option>
-                <option value="yVelocity">Plot Y Velocity</option>
-            </select>
-
-            <label for="contrast">Contrast:</label>
-            <input type="range" id="contrast" min="0" max="1" step="0.01" value="0.5">
-
-            <div id="checkboxes">
-                <label><input type="checkbox" id="tracers"> Tracers</label>
-                <label><input type="checkbox" id="flowlines"> Flowlines</label>
-                <label><input type="checkbox" id="forceOnBarriers"> Force on Barriers</label>
-                <label><input type="checkbox" id="sensor"> Sensor</label>
-                <label><input type="checkbox" id="data"> Data</label>
-            </div>
-
-            <button id="clearBarriers">Clear Barriers</button>
         </div>
     </div>
 
@@ -83,14 +43,13 @@
         varying vec4 v_color;
         
         void main() {
-  
-        // Set vertex position: vec4(X, Y, Z, 1.0)
-        gl_Position = vec4(position.y, position.x, 0.0, 1.0);
-  
-        //gl_PointSize = 5.0;
-  
-        v_color = vec4(velocity, 0.0, pressure, 1.0);
-      }
+            // Set vertex position: vec4(X, Y, Z, 1.0)
+            gl_Position = vec4(position.y, position.x, 0.0, 1.0);
+            
+            //gl_PointSize = 5.0;
+            
+            v_color = vec4(velocity, 0.0, pressure, 1.0);
+        }
       </script>
       <script id="heatFrag" type="x-shader/x-fragment">
         precision mediump float;

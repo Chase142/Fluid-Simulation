@@ -13,7 +13,8 @@ if (gl === null) {
 
 // const ctx = canvas.getContext('2d');
 let drawing = false;
-let points = [];
+var xpoints = [];
+var ypoints = [];
 
 var heatFragCode = document.getElementById("heatFrag").textContent;
 var heatVertCode = document.getElementById("heatVert").textContent;
@@ -37,9 +38,14 @@ function decodeSimulationData(data) {
 }
 
 // Drawing functionality
-document.addEventListener('mousedown', () => {
-    drawing = true;
+document.addEventListener('clearCanvas', () => {
+    drawing = false;
     points = [];
+});
+
+// Drawing functionality
+canvas.addEventListener('mousedown', () => {
+    drawing = true;
 });
 
 canvas.addEventListener('mousemove', (event) => {
@@ -47,8 +53,8 @@ canvas.addEventListener('mousemove', (event) => {
         const rect = canvas.getBoundingClientRect();
         const x = (event.clientX - rect.left) / canvas.width;
         const y = (event.clientY - rect.top) / canvas.height;
-        points.push({ x, y });
-        console.log(points);
+        xpoints.push(x);
+        ypoints.push(y);
     }
 });
 
@@ -56,30 +62,38 @@ document.addEventListener('mouseup', () => {
     drawing = false;
 });
 
-document.getElementById('clearCanvas').addEventListener('click', () => {
-    // ctx.clearRect(0, 0, canvas.width, canvas.height);
-    points = [];
-    alert('Cleared canvas not implemented yet');
+var brushRadius = 5;
+
+document.getElementById('inletVelocity').addEventListener('change', () => {
+    
+    socket.emit('param_update', 
+        {
+            inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
+            tau: parseFloat(document.getElementById('viscosity').value)
+        });
 });
 
-document.getElementById('clearBarriers').addEventListener('click', () => {
-    socket.emit('clear_barriers');
-    alert('Cleared barries not immplemented yet');
+document.getElementById('viscosity').addEventListener('change', () => {
+    
+    socket.emit('param_update', 
+        {
+            inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
+            tau: parseFloat(document.getElementById('viscosity').value)
+        });
 });
 
 document.getElementById('startSimulation').addEventListener('click', () => {
-    // const params = {
-    //     inletVelocity: parseFloat(document.getElementById('param1').value)
-    // };
-    // socket.emit('start_simulation', { points, params });
-    socket.emit('start_simulation');
+    console.log(xpoints)
+    console.log(ypoints)
+    const params = {
+        inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
+        brushPoints: [xpoints, ypoints],
+        brushRadius: brushRadius
+    };
+    socket.emit('start_simulation', params );
+    // socket.emit('start_simulation');
 });
 
 socket.on('simulation_update', function(payload){
     decodeSimulationData(payload);
-});
-
-document.getElementById('resetFluid').addEventListener('click', () => {
-    socket.emit('reset_fluid');
-    alert('Reset not implemented yet');
 });
