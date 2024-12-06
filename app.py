@@ -31,7 +31,7 @@ y = np.arange(Ny)+0.5
 X, Y = np.meshgrid(x,y)
 
 # Paramters
-tau = 0.545
+tau = 0.6
 u0 = 0.125
 
 omega1 = dt/tau
@@ -81,43 +81,9 @@ for i in range(q):
     indexes[i] = indTotal.reshape(Nx * Ny)
 
 
-# Pre-calculating solid & solid bounce backs
-solid = np.zeros((Ny, Nx), dtype=bool)
-
-# Square
-# solid = np.where((X > (Nx // 12)) & (X < ((Nx*2)// 12)) & (Y > (Ny // 3)) & (Y < ((Ny*2)// 3)), True, False)
-
-# Circle
-circle_center_x = Nx // 6
-circle_center_y = Ny // 2
-circle_radius = Ny // 6
-distances = np.sqrt((X- circle_center_x)**2 + (Y-circle_center_y)**2)
-solid = np.where((distances < circle_radius), True, False)
-
-# Line
-# wall_height = 8
-# solid[:, Ny//2] = np.where((Y[:, Ny//2]<int((Ny//2)+wall_height)) & (Y[:, Ny//2]>int((Ny//2)-wall_height)), True, False)
-
-# def applyBrush(points, rad):
-#     print(points)
-#     solidArr = np.zeros((Ny, Nx), dtype=bool)
-#     distances = np.sqrt((X- points[0] * Nx)**2 + (Y-points[0] * Ny)**2)
-#     # print(distances)
-#     solid = np.where((distances < circle_radius), True, False)
-    
-
-def createSolid(boolArr):
-    boundary_nodes = np.zeros((q, Ny, Nx), dtype=bool)
-    for i in range(q):
-        streamed = np.roll(solid, shift=-c[i, 0], axis=1)
-        streamed = np.roll(streamed, shift=-c[i, 1], axis=0)
-        boundary_nodes[i] = (streamed==True) & (solid==False)
+obj_type = 'circle'
+solid, boundary_nodes = define_object(obj_type, c, q, Nx, Ny, X, Y)
         
-    return boundary_nodes
-    
-    
-
-boundary_nodes = createSolid(solid)
 
 # Initialize distributions (steady flow right)
 u[0] += u0
@@ -130,18 +96,14 @@ def index():
     return render_template('index.html')
 
 @socketio.on('start_simulation')
-def handle_simulation(params):
+def handle_simulation():
     sid = request.sid 
 
     if sid in connections:
         connections[sid]['stop_event'].send('stop')
         print(f"Previous simulation for SID {sid} has been stopped.")
 
-    # applyBrush(params["brushPoints"], params["brushRadius"])
-
     stop_event = Event()
-    
-    # u0 = params["inletVelocity"]
 
     def simulation_task(sid, stop_event):
         global f, rho, u
@@ -174,22 +136,64 @@ def handle_simulation(params):
 
 @socketio.on('param_update')
 def handle_update(params):
-    global u0, omega
+    global u0, omega, u, f, solid, boundary_nodes
     u0 = params["inletVelocity"]
     tau = params["tau"]
+    obj_shape = params["shape"]
+    solid, boundary_nodes = define_object(obj_shape, c, q, Nx, Ny, X, Y)
     omega1 = dt/tau
     omega2 = 1-omega1
     omega = np.array([omega1, omega2])
-    # print(omega)
+
+@socketio.on('change_res')
+def handle_res(params):
+    global Nx, Ny, N
+    Nx = params["nx"]
+    Ny = params["ny"]
+    N = Nx * Ny
+    handle_reset()
 
 @socketio.on('stop_simulation')
 def handle_stop():
     sid = request.sid
     if sid in connections:
         connections[sid]['stop_event'].send('stop')
-        global total_time
-        total_time = 0
         del connections[sid]
+
+@socketio.on('reset_simulation')
+def handle_reset():
+    global f, f_eq, f_star, u, rho, solid, boundary_nodes, indexes, x, X, y, Y
+    x = np.arange(Nx)+0.5
+    y = np.arange(Ny)+0.5
+    X, Y = np.meshgrid(x,y)
+    f = np.zeros((q, Ny, Nx), dtype=float_type)
+    f_eq = np.zeros((q, Ny, Nx), dtype=float_type)
+    f_star = np.zeros((q, Ny, Nx), dtype=float_type)
+    rho = np.ones((Ny, Nx), dtype=float_type)
+    u = np.zeros((d, Ny, Nx), dtype=float_type)
+    solid, boundary_nodes = define_object(obj_type, c, q, Nx, Ny, X, Y)
+
+    indexes = np.zeros((q, Nx * Ny), dtype=int)
+    for i in range(q):
+        xArr = (np.arange(Nx) - c[i][0] + Nx) % Nx
+        yArr = (np.arange(Ny) - c[i][1] + Ny) % Ny
+
+        xInd, yInd = np.meshgrid(xArr, yArr)
+
+        indTotal = yInd * Nx + xInd
+        indexes[i] = indTotal.reshape(Nx * Ny)
+
+    u[0] += u0
+    f = get_eq(f, rho, u, c, ceq, w, q)
+
+    sid = request.sid
+    if sid in connections:
+        connections[sid]['stop_event'].send('stop')
+        del connections[sid]
+
+    handle_simulation()
+
+
 
 @socketio.on('disconnect')
 def handle_disconnect():

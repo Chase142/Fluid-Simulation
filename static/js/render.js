@@ -2,8 +2,8 @@ const socket = io.connect('http://' + document.domain + ':' + location.port);
 
 const canvas = document.getElementById('drawingCanvas');
 // Initialize the GL context
-const gl =
-    canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
 // Only continue if WebGL is available and working
 if (gl === null) {
   alert(
@@ -68,28 +68,60 @@ document.getElementById('inletVelocity').addEventListener('change', () => {
     
     socket.emit('param_update', 
         {
+            shape: document.getElementById('shape').value,
             inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
-            tau: parseFloat(document.getElementById('viscosity').value)
+            tau: tau,
         });
 });
 
 document.getElementById('viscosity').addEventListener('change', () => {
-    
+    viscosity = parseFloat(document.getElementById('viscosity').value);
+    tau = 3*viscosity + 0.5;
     socket.emit('param_update', 
         {
+            shape: document.getElementById('shape').value,
             inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
-            tau: parseFloat(document.getElementById('viscosity').value)
+            tau: tau,
+        });
+});
+
+document.getElementById('shape').addEventListener('change', () => {
+    viscosity = parseFloat(document.getElementById('viscosity').value);
+    tau = 3*viscosity + 0.5;
+    socket.emit('param_update', 
+        {
+            shape: document.getElementById('shape').value,
+            inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
+            tau: tau,
+        });
+});
+
+document.getElementById('nx').addEventListener('change', () => {
+    socket.emit('change_res', 
+        {
+            nx: parseInt(document.getElementById('nx').value),
+            ny: parseInt(document.getElementById('ny').value),
+        });
+});
+
+document.getElementById('ny').addEventListener('change', () => {
+    socket.emit('change_res', 
+        {
+            nx: parseInt(document.getElementById('nx').value),
+            ny: parseInt(document.getElementById('ny').value),
         });
 });
 
 document.getElementById('startSimulation').addEventListener('click', () => {
-    const params = {
-        inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
-        brushPoints: [xpoints, ypoints],
-        brushRadius: brushRadius
-    };
-    socket.emit('start_simulation', params );
-    // socket.emit('start_simulation');
+    socket.emit('start_simulation');
+});
+
+document.getElementById('stopSimulation').addEventListener('click', () => {
+    socket.emit('stop_simulation');
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+    socket.emit('reset_simulation');
 });
 
 socket.on('simulation_update', function(payload){

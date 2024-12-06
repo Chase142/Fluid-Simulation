@@ -1,6 +1,32 @@
 import numpy as np
 import numba as nb
 
+def define_object(obj_type, c, q, Nx, Ny, X, Y):
+    solid = np.zeros((Ny, Nx), dtype=bool)
+    boundary_nodes = np.zeros((q, Ny, Nx), dtype=bool)
+
+    if obj_type == 'circle':
+        circle_center_x = Nx // 6
+        circle_center_y = Ny // 2
+        circle_radius = Ny // 6
+        distances = np.sqrt((X- circle_center_x)**2 + (Y-circle_center_y)**2)
+        solid = np.where((distances < circle_radius), True, False)
+    if obj_type == 'square':
+        solid = np.where((X > (Nx // 12)) & (X < ((Nx*2)// 12)) & (Y > (Ny // 3)) & (Y < ((Ny*2)// 3)), True, False)
+    if obj_type == 'line':
+        wall_height = 8
+        solid[:, Ny//2] = np.where((Y[:, Ny//2]<int((Ny//2)+wall_height)) & (Y[:, Ny//2]>int((Ny//2)-wall_height)), True, False)
+    if obj_type == 'none':
+        pass
+
+    for i in range(q):
+        streamed = np.roll(solid, shift=-c[i, 0], axis=1)
+        streamed = np.roll(streamed, shift=-c[i, 1], axis=0)
+        boundary_nodes[i] = (streamed==True) & (solid==False)
+
+    return solid, boundary_nodes
+
+
 
 @nb.njit(fastmath=True, cache=True)
 def get_eq(f, rho, u, c, ceq, w, q):

@@ -16,20 +16,20 @@
             <!-- Updated Buttons -->
             <button id="startSimulation">Start Simulation</button>
             <button id="stopSimulation">Stop Simulation</button>
-            <button id="clearCanvas">Clear Canvas</button>
+            <button id="reset">Reset Simulation</button>
             <label for="inletVelocity">Inlet Velocity:</label>
-            <input type="range" id="inletVelocity" min="0.01" max="0.2" step="0.01" value="0.125">
-            <label for="viscosity">Viscosity:</label>
-            <input type="range" id="viscosity" min="0.51" max="0.93" step="0.01" value="0.565">
+            <input type="range" id="inletVelocity" min="0.001" max="0.2" step="0.01" value="0.125">
+            <label for="viscosity"> Viscosity:</label>
+            <input type="range" id="viscosity" min="0.003333333333" max="0.1443375673" step="0.01" value="0.03333333333">
             <label for="resolution">Resolution (Nx, Ny):</label>
             <input type="number" id="nx" placeholder="Nx" min="1" value="200">
             <input type="number" id="ny" placeholder="Ny" min="1" value="80">
             <label for="shape">Draw Shape:</label>
             <select id="shape">
-                <option value="none">None</option>
+                <option value="circle" selected>Circle </option>
                 <option value="square">Square</option>
-                <option value="circle">Circle</option>
                 <option value="line">Line</option>
+                <option value="none">None</option>
             </select>
         </div>
     </div>
