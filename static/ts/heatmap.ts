@@ -35,17 +35,17 @@ class Heatmap {
     this.initPositions();
     this.initDefaultData(1);
 
-    this.bindBuffers(true);
+    this.bindBuffers();
   }
 
   private initPositions(){
     
     const posI : number[] = []
-    const width = this.width - 1;
-    const height = this.height - 1;
+    const width = this.width;
+    const height = this.height;
 
-    for (let i = 0; i < this.width; i++) {
-        for (let j = 0; j < this.height; j++){
+    for (let i = 0; i < this.width - 1; i++) {
+        for (let j = 0; j < this.height - 1; j++){
             posI.push(this.indexToCoord(i + 1, width));
             posI.push(this.indexToCoord(j, height));
 
@@ -75,15 +75,17 @@ class Heatmap {
     this.pressureData = new Float32Array(defaultArray);
   }
 
-  private bindBuffers(bind_all : boolean = false){
-    if(bind_all){
-      this.positionBuffer = this.createBuffer(this.positionData!)
-      this.setAttributePointer("position", this.positionBuffer, 2, this.positionData!.BYTES_PER_ELEMENT);  
-    }
+  private bindBuffers(){
+    this.positionBuffer = this.createBuffer(this.positionData!)
+    this.setAttributePointer("position", this.positionBuffer, 2, this.positionData!.BYTES_PER_ELEMENT);  
     this.velocityBuffer = this.createBuffer(this.velocityData!);
     this.setAttributePointer("velocity", this.velocityBuffer, 1, this.velocityData!.BYTES_PER_ELEMENT);  
     this.pressureBuffer = this.createBuffer(this.pressureData!);
     this.setAttributePointer("pressure", this.pressureBuffer, 1, this.pressureData!.BYTES_PER_ELEMENT);
+  }
+
+  private updateBuffers(){
+
   }
 
   // Compile the shaders and create the program
@@ -151,7 +153,7 @@ class Heatmap {
   public drawData() {
     const gl = this.gl!;
     // Draw the geometry
-    const numVerts = this.width * this.height * 6;
+    const numVerts = (this.width - 1) * (this.height - 1) * 6;
     gl.drawArrays(gl.TRIANGLES, 0, numVerts);
   }
 
@@ -176,7 +178,7 @@ class Heatmap {
     this.velocityData = this.interleave2d(velocities);
     this.pressureData = this.interleave2d(pressures);
 
-    this.bindBuffers();
+    this.updateBuffers();
   }
 }
   

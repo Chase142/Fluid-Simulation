@@ -21,14 +21,14 @@ var Heatmap = /** @class */ (function () {
         this.program = this.compileShaders(vertexShaderSource, fragmentShaderSource);
         this.initPositions();
         this.initDefaultData(1);
-        this.bindBuffers(true);
+        this.bindBuffers();
     }
     Heatmap.prototype.initPositions = function () {
         var posI = [];
-        var width = this.width - 1;
-        var height = this.height - 1;
-        for (var i = 0; i < this.width; i++) {
-            for (var j = 0; j < this.height; j++) {
+        var width = this.width;
+        var height = this.height;
+        for (var i = 0; i < this.width - 1; i++) {
+            for (var j = 0; j < this.height - 1; j++) {
                 posI.push(this.indexToCoord(i + 1, width));
                 posI.push(this.indexToCoord(j, height));
                 posI.push(this.indexToCoord(i, width));
@@ -50,16 +50,15 @@ var Heatmap = /** @class */ (function () {
         this.velocityData = new Float32Array(defaultArray);
         this.pressureData = new Float32Array(defaultArray);
     };
-    Heatmap.prototype.bindBuffers = function (bind_all) {
-        if (bind_all === void 0) { bind_all = false; }
-        if (bind_all) {
-            this.positionBuffer = this.createBuffer(this.positionData);
-            this.setAttributePointer("position", this.positionBuffer, 2, this.positionData.BYTES_PER_ELEMENT);
-        }
+    Heatmap.prototype.bindBuffers = function () {
+        this.positionBuffer = this.createBuffer(this.positionData);
+        this.setAttributePointer("position", this.positionBuffer, 2, this.positionData.BYTES_PER_ELEMENT);
         this.velocityBuffer = this.createBuffer(this.velocityData);
         this.setAttributePointer("velocity", this.velocityBuffer, 1, this.velocityData.BYTES_PER_ELEMENT);
         this.pressureBuffer = this.createBuffer(this.pressureData);
         this.setAttributePointer("pressure", this.pressureBuffer, 1, this.pressureData.BYTES_PER_ELEMENT);
+    };
+    Heatmap.prototype.updateBuffers = function () {
     };
     // Compile the shaders and create the program
     Heatmap.prototype.compileShaders = function (vshaderSource, fshaderSource) {
@@ -120,7 +119,7 @@ var Heatmap = /** @class */ (function () {
     Heatmap.prototype.drawData = function () {
         var gl = this.gl;
         // Draw the geometry
-        var numVerts = this.width * this.height * 6;
+        var numVerts = (this.width - 1) * (this.height - 1) * 6;
         gl.drawArrays(gl.TRIANGLES, 0, numVerts);
     };
     Heatmap.prototype.interleave2d = function (arr) {
@@ -140,7 +139,7 @@ var Heatmap = /** @class */ (function () {
     Heatmap.prototype.updateData = function (velocities, pressures) {
         this.velocityData = this.interleave2d(velocities);
         this.pressureData = this.interleave2d(pressures);
-        this.bindBuffers();
+        this.updateBuffers();
     };
     return Heatmap;
 }());
