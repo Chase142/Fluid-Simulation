@@ -85,7 +85,9 @@ class Heatmap {
   }
 
   private updateBuffers(){
-
+    const gl : WebGLRenderingContext = this.gl!;
+    gl.bufferData(gl.ARRAY_BUFFER, this.pressureData, gl.STREAM_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, this.velocityData, gl.STREAM_DRAW);
   }
 
   // Compile the shaders and create the program
@@ -161,7 +163,7 @@ class Heatmap {
     var interleaved : number[] = []
 
     for (let i = 0; i < arr.length - 1; i++) {
-      for (let j = 0; j < arr[0].length; j++){
+      for (let j = 0; j < arr[0].length - 1; j++){
           interleaved.push(arr[i + 1][j]);
           interleaved.push(arr[i][j]);
           interleaved.push(arr[i][j + 1]);

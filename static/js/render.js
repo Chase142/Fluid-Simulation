@@ -83,8 +83,6 @@ document.getElementById('viscosity').addEventListener('change', () => {
 });
 
 document.getElementById('startSimulation').addEventListener('click', () => {
-    console.log(xpoints)
-    console.log(ypoints)
     const params = {
         inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
         brushPoints: [xpoints, ypoints],

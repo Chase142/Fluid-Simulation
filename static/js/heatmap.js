@@ -59,6 +59,9 @@ var Heatmap = /** @class */ (function () {
         this.setAttributePointer("pressure", this.pressureBuffer, 1, this.pressureData.BYTES_PER_ELEMENT);
     };
     Heatmap.prototype.updateBuffers = function () {
+        var gl = this.gl;
+        gl.bufferData(gl.ARRAY_BUFFER, this.pressureData, gl.STREAM_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, this.velocityData, gl.STREAM_DRAW);
     };
     // Compile the shaders and create the program
     Heatmap.prototype.compileShaders = function (vshaderSource, fshaderSource) {
@@ -125,7 +128,7 @@ var Heatmap = /** @class */ (function () {
     Heatmap.prototype.interleave2d = function (arr) {
         var interleaved = [];
         for (var i = 0; i < arr.length - 1; i++) {
-            for (var j = 0; j < arr[0].length; j++) {
+            for (var j = 0; j < arr[0].length - 1; j++) {
                 interleaved.push(arr[i + 1][j]);
                 interleaved.push(arr[i][j]);
                 interleaved.push(arr[i][j + 1]);
