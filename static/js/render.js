@@ -18,7 +18,10 @@ var ypoints = [];
 
 var heatFragCode = document.getElementById("heatFrag").textContent;
 var heatVertCode = document.getElementById("heatVert").textContent;
-const heatmap = new Heatmap(canvas, 80, 200, heatVertCode, heatFragCode);
+const heatmap = new Heatmap(canvas, 
+    parseInt(document.getElementById('ny').value), 
+    parseInt(document.getElementById('nx').value), 
+    heatVertCode, heatFragCode);
 // Set the clear color
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -64,36 +67,27 @@ document.addEventListener('mouseup', () => {
 
 var brushRadius = 5;
 
-document.getElementById('inletVelocity').addEventListener('change', () => {
-    
+function updateParams(){
+    viscosity = parseFloat(document.getElementById('viscosity').value);
+    tau = 3*viscosity + 0.5;
     socket.emit('param_update', 
         {
             shape: document.getElementById('shape').value,
             inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
             tau: tau,
         });
+}
+
+document.getElementById('inletVelocity').addEventListener('change', () => {
+    updateParams();
 });
 
 document.getElementById('viscosity').addEventListener('change', () => {
-    viscosity = parseFloat(document.getElementById('viscosity').value);
-    tau = 3*viscosity + 0.5;
-    socket.emit('param_update', 
-        {
-            shape: document.getElementById('shape').value,
-            inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
-            tau: tau,
-        });
+    updateParams();
 });
 
 document.getElementById('shape').addEventListener('change', () => {
-    viscosity = parseFloat(document.getElementById('viscosity').value);
-    tau = 3*viscosity + 0.5;
-    socket.emit('param_update', 
-        {
-            shape: document.getElementById('shape').value,
-            inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
-            tau: tau,
-        });
+    updateParams();
 });
 
 document.getElementById('nx').addEventListener('change', () => {

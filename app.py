@@ -117,6 +117,7 @@ def handle_simulation():
             
             vSq = vSq / np.max(vSq)
 
+            rhoNorm = rho - np.min(rho)
             rhoNorm = rho / np.max(rho)
 
             payload = [vSq.tolist(), rhoNorm.tolist()]
