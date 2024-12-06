@@ -86,7 +86,9 @@ class Heatmap {
 
   private updateBuffers(){
     const gl : WebGLRenderingContext = this.gl!;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.pressureBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, this.pressureData, gl.STREAM_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.velocityBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, this.velocityData, gl.STREAM_DRAW);
   }
 
