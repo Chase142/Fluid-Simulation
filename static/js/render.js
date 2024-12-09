@@ -40,9 +40,10 @@ function decodeSimulationData(data) {
 }
 
 // Drawing functionality
-document.addEventListener('clearCanvas', () => {
+document.getElementById('clearCanvas').addEventListener('click', () => {
     drawing = false;
     console.log(points)
+    console.log("beaver")
     points = [];
 });
 
@@ -56,15 +57,14 @@ canvas.addEventListener('mousemove', (event) => {
         const rect = canvas.getBoundingClientRect();
         const x = (event.clientX - rect.left) / canvas.width;
         const y = (event.clientY - rect.top) / canvas.height;
-        points.push([x, y]);
+        points.push([x, 1 - y]);
     }
 });
 
 document.addEventListener('mouseup', () => {
+    updateParams();
     drawing = false;
 });
-
-var brushRadius = 5;
 
 function updateParams(){
     viscosity = parseFloat(document.getElementById('viscosity').value);
@@ -74,6 +74,8 @@ function updateParams(){
             shape: document.getElementById('shape').value,
             inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
             tau: tau,
+            points: points,
+            brushRad: document.getElementById('brushRad').value
         });
 }
 
@@ -86,6 +88,10 @@ document.getElementById('viscosity').addEventListener('change', () => {
 });
 
 document.getElementById('shape').addEventListener('change', () => {
+    updateParams();
+});
+
+document.getElementById('brushRad').addEventListener('change', () => {
     updateParams();
 });
 

@@ -30,8 +30,11 @@
                 <option value="circle" selected>Circle </option>
                 <option value="square">Square</option>
                 <option value="line">Line</option>
+                <option value="user">User Input</option>
                 <option value="none">None</option>
             </select>
+            <label for="brushSettings">Brush Radius</label>
+            <input type="range" id="brushRad" min="0.01" max="0.1" step="0.01" value="0.05">
             <label for="plotType">Plot Values:</label>
             <select id="plotType">
                 <option value="velocity" selected>Velocity </option>

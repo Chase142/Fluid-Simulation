@@ -1,14 +1,13 @@
 import numpy as np
 import numba as nb
 
-def define_object(obj_type, c, q, Nx, Ny, X, Y):
+def define_object(obj_type, Nx, Ny, X, Y, **kwargs):
     solid = np.zeros((Ny, Nx), dtype=bool)
-    boundary_nodes = np.zeros((q, Ny, Nx), dtype=bool)
 
     if obj_type == 'circle':
-        circle_center_x = Nx // 6
-        circle_center_y = Ny // 2
-        circle_radius = Ny // 6
+        circle_radius = kwargs["radius"]
+        circle_center_x = kwargs["center"][0]
+        circle_center_y = kwargs["center"][1]
         distances = np.sqrt((X- circle_center_x)**2 + (Y-circle_center_y)**2)
         solid = np.where((distances < circle_radius), True, False)
     if obj_type == 'square':
@@ -19,14 +18,17 @@ def define_object(obj_type, c, q, Nx, Ny, X, Y):
     if obj_type == 'none':
         pass
 
+    return solid
+
+def get_boundary(solid, c, q, Nx, Ny):
+    boundary_nodes = np.zeros((q, Ny, Nx), dtype=bool)
+
     for i in range(q):
         streamed = np.roll(solid, shift=-c[i, 0], axis=1)
         streamed = np.roll(streamed, shift=-c[i, 1], axis=0)
         boundary_nodes[i] = (streamed==True) & (solid==False)
-
-    return solid, boundary_nodes
-
-
+        
+    return boundary_nodes
 
 @nb.njit(fastmath=True, cache=True)
 def get_eq(f, rho, u, c, ceq, w, q):

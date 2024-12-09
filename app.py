@@ -80,10 +80,38 @@ for i in range(q):
     indTotal = yInd * Nx + xInd
     indexes[i] = indTotal.reshape(Nx * Ny)
 
+#Shape Defaults, should probably move these to html
+CIRCLE_CENTER_X = Nx // 6
+CIRCLE_CENTER_Y = Ny // 2
+CIRCLE_RADIUS = Ny // 6
 
 obj_type = 'circle'
-solid, boundary_nodes = define_object(obj_type, c, q, Nx, Ny, X, Y)
+solid = define_object(obj_type, Nx, Ny, X, Y, radius = CIRCLE_RADIUS, center = [CIRCLE_CENTER_X, CIRCLE_CENTER_Y])
+boundary_nodes = get_boundary(solid, c, q, Nx, Ny)
+
+#Brush stuff
+points = []
+brushRad = 0.05
+def drawpoints(points, radius):
+    circles = [define_object('circle', Nx, Ny, X, Y, 
+                             radius=radius*min(Nx, Ny), 
+                             center = [x * Nx, y * Ny]) for x, y in points
+               ]
+    solid = np.logical_or.reduce(circles)
+    boundary_nodes = get_boundary(solid, c, q, Nx, Ny)
+    
+    return solid, boundary_nodes
         
+
+def createSolids():
+    global solid, boundary_nodes
+    if(obj_type == "user"):
+        solid, boundary_nodes = drawpoints(points, float(brushRad))
+        
+    else:
+        solid = define_object(obj_type, Nx, Ny, X, Y, 
+                          radius = CIRCLE_RADIUS, center = [CIRCLE_CENTER_X, CIRCLE_CENTER_Y])
+        boundary_nodes = get_boundary(solid, c, q, Nx, Ny)
 
 # Initialize distributions (steady flow right)
 u[0] += u0
@@ -120,7 +148,7 @@ def handle_simulation():
             rhoNorm = rho - np.min(rho)
             rhoNorm = rho / np.max(rho)
             
-            rhoNorm = np.where(solid == 1, 0, rhoNorm)
+            rhoNorm = np.where(solid == True, 0, rhoNorm)
 
             payload = [vSq.tolist(), rhoNorm.tolist()]
 
@@ -139,12 +167,16 @@ def handle_simulation():
 
 @socketio.on('param_update')
 def handle_update(params):
-    global u0, omega, u, f, solid, boundary_nodes, obj_type
+    global u0, omega, u, f, solid, boundary_nodes, obj_type, points, brushRad
     u0 = params["inletVelocity"]
     tau = params["tau"]
     obj_shape = params["shape"]
+    points = params["points"]
+    brushRad = params["brushRad"]
     obj_type = obj_shape
-    solid, boundary_nodes = define_object(obj_shape, c, q, Nx, Ny, X, Y)
+    
+    createSolids()
+    
     omega1 = dt/tau
     omega2 = 1-omega1
     omega = np.array([omega1, omega2])
@@ -175,7 +207,8 @@ def handle_reset():
     f_star = np.zeros((q, Ny, Nx), dtype=float_type)
     rho = np.ones((Ny, Nx), dtype=float_type)
     u = np.zeros((d, Ny, Nx), dtype=float_type)
-    solid, boundary_nodes = define_object(obj_type, c, q, Nx, Ny, X, Y)
+    
+    createSolids()
 
     indexes = np.zeros((q, Nx * Ny), dtype=int)
     for i in range(q):
@@ -196,8 +229,6 @@ def handle_reset():
         del connections[sid]
 
     handle_simulation()
-
-
 
 @socketio.on('disconnect')
 def handle_disconnect():
