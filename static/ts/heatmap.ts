@@ -157,7 +157,7 @@ class Heatmap {
   public drawData() {
     const gl = this.gl!;
     // Draw the geometry
-    const numVerts = (this.width - 1) * (this.height - 1) * 6;
+    const numVerts = (this.width) * (this.height) * 6;
     gl.drawArrays(gl.TRIANGLES, 0, numVerts);
   }
 

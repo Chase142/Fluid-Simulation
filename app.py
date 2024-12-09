@@ -139,10 +139,11 @@ def handle_simulation():
 
 @socketio.on('param_update')
 def handle_update(params):
-    global u0, omega, u, f, solid, boundary_nodes
+    global u0, omega, u, f, solid, boundary_nodes, obj_type
     u0 = params["inletVelocity"]
     tau = params["tau"]
     obj_shape = params["shape"]
+    obj_type = obj_shape
     solid, boundary_nodes = define_object(obj_shape, c, q, Nx, Ny, X, Y)
     omega1 = dt/tau
     omega2 = 1-omega1

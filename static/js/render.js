@@ -13,8 +13,7 @@ if (gl === null) {
 
 // const ctx = canvas.getContext('2d');
 let drawing = false;
-var xpoints = [];
-var ypoints = [];
+var points = [];
 
 var heatFragCode = document.getElementById("heatFrag").textContent;
 var heatVertCode = document.getElementById("heatVert").textContent;
@@ -43,6 +42,7 @@ function decodeSimulationData(data) {
 // Drawing functionality
 document.addEventListener('clearCanvas', () => {
     drawing = false;
+    console.log(points)
     points = [];
 });
 
@@ -56,8 +56,7 @@ canvas.addEventListener('mousemove', (event) => {
         const rect = canvas.getBoundingClientRect();
         const x = (event.clientX - rect.left) / canvas.width;
         const y = (event.clientY - rect.top) / canvas.height;
-        xpoints.push(x);
-        ypoints.push(y);
+        points.push([x, y]);
     }
 });
 
