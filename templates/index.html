@@ -15,8 +15,7 @@
         <div id="controls">
             <!-- Updated Buttons -->
             <button id="startSimulation">Start Simulation</button>
-            <button id="stopSimulation">Stop Simulation</button>
-            <button id="clearCanvas">Clear Canvas</button>
+            <button id="stopSimulation">Pause Simulation</button>
             <button id="reset">Reset Simulation</button>
             <label for="inletVelocity">Inlet Velocity:</label>
             <input type="range" id="inletVelocity" min="0.001" max="0.2" step="0.01" value="0.125">
@@ -35,12 +34,13 @@
             </select>
             <label for="brushSettings">Brush Radius</label>
             <input type="range" id="brushRad" min="0.01" max="0.1" step="0.01" value="0.05">
-            <label for="plotType">Plot Values:</label>
+            <button id="clearCanvas">Clear Canvas</button>
+            <!-- <label for="plotType">Plot Values:</label>
             <select id="plotType">
                 <option value="velocity" selected>Velocity </option>
                 <option value="pressure">Pressure</option>
                 <option value="combine">Combined</option>
-            </select>
+            </select> -->
         </div>
     </div>
 
