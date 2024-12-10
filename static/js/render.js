@@ -42,9 +42,8 @@ function decodeSimulationData(data) {
 // Drawing functionality
 document.getElementById('clearCanvas').addEventListener('click', () => {
     drawing = false;
-    console.log(points)
-    console.log("beaver")
     points = [];
+    updateParams();
 });
 
 // Drawing functionality
