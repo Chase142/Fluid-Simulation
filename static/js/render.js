@@ -119,7 +119,6 @@ document.getElementById('stopSimulation').addEventListener('click', () => {
 });
 
 document.getElementById('reset').addEventListener('click', () => {
-    points = [];
     socket.emit('reset_simulation');
 });
 

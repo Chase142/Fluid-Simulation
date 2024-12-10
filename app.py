@@ -198,8 +198,7 @@ def handle_stop():
 
 @socketio.on('reset_simulation')
 def handle_reset():
-    global f, f_eq, f_star, u, rho, solid, boundary_nodes, indexes, x, X, y, Y, points
-    points = []
+    global f, f_eq, f_star, u, rho, solid, boundary_nodes, indexes, x, X, y, Y
     x = np.arange(Nx)+0.5
     y = np.arange(Ny)+0.5
     X, Y = np.meshgrid(x,y)
