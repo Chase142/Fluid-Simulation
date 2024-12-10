@@ -29,7 +29,7 @@ class Heatmap {
       alert("Unable to initialize WebGL. Your browser or machine may not support it.");
       return;
     }
-    
+
     this.program = this.compileShaders(vertexShaderSource, fragmentShaderSource);
 
     this.initPositions();
@@ -39,13 +39,13 @@ class Heatmap {
   }
 
   private initPositions(){
-    
-    const posI : number[] = []
-    const width = this.width - 1;
-    const height = this.height - 1;
 
-    for (let i = 0; i < this.width; i++) {
-        for (let j = 0; j < this.height; j++){
+    const posI : number[] = []
+    const width = this.width;
+    const height = this.height;
+
+    for (let i = 0; i < this.width - 1; i++) {
+        for (let j = 0; j < this.height - 1; j++){
             posI.push(this.indexToCoord(i + 1, width));
             posI.push(this.indexToCoord(j, height));
 
@@ -105,7 +105,7 @@ class Heatmap {
       console.error('Error compiling vertex shader:', gl.getShaderInfoLog(vs));
       return null;
     }
-  
+
     const fs : WebGLShader = gl.createShader(gl.FRAGMENT_SHADER)!;
     if(!fs){
       alert("Error initializing fragment shader");
@@ -116,7 +116,7 @@ class Heatmap {
       console.error('Error compiling fragment shader:', gl.getShaderInfoLog(fs));
       return null;
     }
-  
+
     const program = gl.createProgram()!;
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
@@ -125,11 +125,11 @@ class Heatmap {
       console.error('Error linking program:', gl.getProgramInfoLog(program));
       return null;
     }
-  
+
     gl.useProgram(program);
     return program;
   }
-  
+
   // Create and bind a buffer object
   private createBuffer(data : Float32Array) : WebGLBuffer {
     const gl : WebGLRenderingContext = this.gl!;
@@ -138,7 +138,7 @@ class Heatmap {
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STREAM_DRAW);
     return buffer;
   }
-  
+
   // Helper function to set attribute pointer
   private setAttributePointer(attribute : string, buffer : WebGLBuffer, dim : number, bytesPerEl : number, offset : number = 0) {
     const gl = this.gl!;
@@ -147,17 +147,17 @@ class Heatmap {
     gl.vertexAttribPointer(attributeLocation, dim, gl.FLOAT, false, bytesPerEl * dim, offset);
     gl.enableVertexAttribArray(attributeLocation);
   }
-  
+
   // Convert index to normalized coordinates
   private indexToCoord(idx : number, size : number) {
       return 2 * (idx / size) - 1;
   }
-  
+
   // Render the updated data
   public drawData() {
     const gl = this.gl!;
     // Draw the geometry
-    const numVerts = (this.width) * (this.height) * 6;
+    const numVerts = (this.width - 1) * (this.height - 1) * 6;
     gl.drawArrays(gl.TRIANGLES, 0, numVerts);
   }
 
@@ -165,7 +165,7 @@ class Heatmap {
     var interleaved : number[] = []
 
     for (let i = 0; i < arr.length - 1; i++) {
-      for (let j = 0; j < arr[0].length; j++){
+      for (let j = 0; j < arr[0].length - 1; j++){
           interleaved.push(arr[i + 1][j]);
           interleaved.push(arr[i][j]);
           interleaved.push(arr[i][j + 1]);
@@ -185,4 +185,3 @@ class Heatmap {
     this.updateBuffers();
   }
 }
-  

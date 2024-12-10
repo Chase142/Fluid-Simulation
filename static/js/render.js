@@ -43,7 +43,7 @@ function decodeSimulationData(data) {
 document.getElementById('clearCanvas').addEventListener('click', () => {
     drawing = false;
     points = [];
-    updateParams();
+    updateParams()
 });
 
 // Drawing functionality
@@ -119,6 +119,7 @@ document.getElementById('stopSimulation').addEventListener('click', () => {
 });
 
 document.getElementById('reset').addEventListener('click', () => {
+    points = [];
     socket.emit('reset_simulation');
 });
 
