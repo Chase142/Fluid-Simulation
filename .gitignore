@@ -2,3 +2,5 @@ Pipfile
 Pipfile.lock
 __pycache__
 .vscode
+**/*.ipynb_checkpoints/
+.ipynb_checkpoints
