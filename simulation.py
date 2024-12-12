@@ -69,14 +69,14 @@ def interior_boundary(f, f_star, boundary_nodes, opposite_directions, q):
 
 def boundary(f, f_star):
     # Bottom Wall
-    f[4, -1, :] = f_star[2, -1, :]
-    f[8, -1, :] = f_star[6, -1, :]
-    f[7, -1, :] = f_star[5, -1, :]
+    # f[4, -1, :] = f_star[2, -1, :]
+    # f[8, -1, :] = f_star[6, -1, :]
+    # f[7, -1, :] = f_star[5, -1, :]
 
-    # Top Wall
-    f[2, 0, :] = f_star[4, 0, :]
-    f[5, 0, :] = f_star[7, 0, :]
-    f[6, 0, :] = f_star[8, 0, :]
+    # # Top Wall
+    # f[2, 0, :] = f_star[4, 0, :]
+    # f[5, 0, :] = f_star[7, 0, :]
+    # f[6, 0, :] = f_star[8, 0, :]
 
     # Right Wall
     f[3, :, -1] = f[3, :, -2]

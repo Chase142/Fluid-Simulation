@@ -93,11 +93,13 @@ boundary_nodes = get_boundary(solid, c, q, Nx, Ny)
 points = []
 brushRad = 0.05
 def drawpoints(points, radius):
-    circles = [define_object('circle', Nx, Ny, X, Y, 
-                             radius=radius*min(Nx, Ny), 
-                             center = [x * Nx, y * Ny]) for x, y in points
-               ]
-    solid = np.logical_or.reduce(circles)
+    solid = np.zeros((Ny, Nx), dtype=bool)
+    if(points != None):
+        circles = [define_object('circle', Nx, Ny, X, Y, 
+                                 radius=radius*min(Nx, Ny), 
+                                 center = [x * Nx, y * Ny]) for x, y in points
+                   ]
+        solid = np.logical_or.reduce(circles)
     boundary_nodes = get_boundary(solid, c, q, Nx, Ny)
     
     return solid, boundary_nodes
