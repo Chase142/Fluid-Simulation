@@ -94,7 +94,7 @@ points = []
 brushRad = 0.05
 def drawpoints(points, radius):
     solid = np.zeros((Ny, Nx), dtype=bool)
-    if(points != None):
+    if(points != None and len(points) > 0):
         circles = [define_object('circle', Nx, Ny, X, Y, 
                                  radius=radius*min(Nx, Ny), 
                                  center = [x * Nx, y * Ny]) for x, y in points

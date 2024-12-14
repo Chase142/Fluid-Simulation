@@ -38,6 +38,7 @@ class Heatmap {
     this.bindBuffers();
   }
 
+  //Creates vertex grid, with two triangles forming a grid of squares
   private initPositions(){
 
     const posI : number[] = []
@@ -69,12 +70,14 @@ class Heatmap {
     this.positionData = new Float32Array(new Float32Array(posI));
   }
 
+  //Draw initial screen
   private initDefaultData(val : number){
     var defaultArray = Array(this.width * this.height * 6).map(() => val);
     this.velocityData = new Float32Array(defaultArray);
     this.pressureData = new Float32Array(defaultArray);
   }
 
+  //Call this once unless size changes, creates buffers for simulation data
   private bindBuffers(){
     this.positionBuffer = this.createBuffer(this.positionData!)
     this.setAttributePointer("position", this.positionBuffer, 2, this.positionData!.BYTES_PER_ELEMENT);  
@@ -84,6 +87,7 @@ class Heatmap {
     this.setAttributePointer("pressure", this.pressureBuffer, 1, this.pressureData!.BYTES_PER_ELEMENT);
   }
 
+  //Resets buffer by data
   private updateBuffers(){
     const gl : WebGLRenderingContext = this.gl!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.pressureBuffer);
@@ -157,12 +161,15 @@ class Heatmap {
   public drawData() {
     const gl = this.gl!;
     // Draw the geometry
-    const numVerts = (this.width) * (this.height) * 6;
+    const numVerts = (this.width - 1) * (this.height) * 6;
     gl.drawArrays(gl.TRIANGLES, 0, numVerts);
   }
 
+  //Order 2 dimensional field to 1 dimensional, in same order as vertices are drawn
   private interleave2d(arr : number[][]){
     var interleaved : number[] = []
+
+    // console.log(arr);
 
     for (let i = 0; i < arr.length - 1; i++) {
       for (let j = 0; j < arr[0].length; j++){
@@ -178,6 +185,7 @@ class Heatmap {
     return new Float32Array(interleaved);
   }
 
+  //Call to change values when the grid is not modified
   public updateData(velocities : number[][], pressures : number[][]){
     this.velocityData = this.interleave2d(velocities);
     this.pressureData = this.interleave2d(pressures);

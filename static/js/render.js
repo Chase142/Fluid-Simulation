@@ -42,11 +42,12 @@ function decodeSimulationData(data) {
 // Drawing functionality
 document.getElementById('clearCanvas').addEventListener('click', () => {
     drawing = false;
+    //Clear but keep reference
     points = [];
-    updateParams()
+    console.log(points);
+    updateParams();
 });
 
-// Drawing functionality
 canvas.addEventListener('mousedown', () => {
     drawing = true;
 });
@@ -65,19 +66,24 @@ document.addEventListener('mouseup', () => {
     drawing = false;
 });
 
+//Pulls all simulation parameters from UI
 function updateParams(){
     viscosity = parseFloat(document.getElementById('viscosity').value);
     tau = 3*viscosity + 0.5;
-    socket.emit('param_update', 
-        {
-            shape: document.getElementById('shape').value,
-            inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
-            tau: tau,
-            points: points,
-            brushRad: document.getElementById('brushRad').value
-        });
+    const payload = 
+    {
+        shape: document.getElementById('shape').value,
+        inletVelocity: parseFloat(document.getElementById('inletVelocity').value),
+        tau: tau,
+        points: points,
+        brushRad: parseFloat(document.getElementById('brushRad').value)
+    };
+    console.log(payload)
+    socket.emit('param_update', payload);
 }
 
+
+//Event handling
 document.getElementById('inletVelocity').addEventListener('change', () => {
     updateParams();
 });

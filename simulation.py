@@ -67,6 +67,9 @@ def interior_boundary(f, f_star, boundary_nodes, opposite_directions, q):
         f[opposite_directions[i]][boundary_nodes[i]] = f_star[i][boundary_nodes[i]]
     return f
 
+#Boundary conditions
+#Top two blocks make the top and bottom walls solid boundaries
+#Without these the simulation is periodic from top to bottom
 def boundary(f, f_star):
     # Bottom Wall
     # f[4, -1, :] = f_star[2, -1, :]

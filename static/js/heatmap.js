@@ -23,6 +23,7 @@ var Heatmap = /** @class */ (function () {
         this.initDefaultData(1);
         this.bindBuffers();
     }
+    //Creates vertex grid, with two triangles forming a grid of squares
     Heatmap.prototype.initPositions = function () {
         var posI = [];
         var width = this.width - 1;
@@ -45,11 +46,13 @@ var Heatmap = /** @class */ (function () {
         }
         this.positionData = new Float32Array(new Float32Array(posI));
     };
+    //Draw initial screen
     Heatmap.prototype.initDefaultData = function (val) {
         var defaultArray = Array(this.width * this.height * 6).map(function () { return val; });
         this.velocityData = new Float32Array(defaultArray);
         this.pressureData = new Float32Array(defaultArray);
     };
+    //Call this once unless size changes, creates buffers for simulation data
     Heatmap.prototype.bindBuffers = function () {
         this.positionBuffer = this.createBuffer(this.positionData);
         this.setAttributePointer("position", this.positionBuffer, 2, this.positionData.BYTES_PER_ELEMENT);
@@ -58,6 +61,7 @@ var Heatmap = /** @class */ (function () {
         this.pressureBuffer = this.createBuffer(this.pressureData);
         this.setAttributePointer("pressure", this.pressureBuffer, 1, this.pressureData.BYTES_PER_ELEMENT);
     };
+    //Resets buffer by data
     Heatmap.prototype.updateBuffers = function () {
         var gl = this.gl;
         gl.bindBuffer(gl.ARRAY_BUFFER, this.pressureBuffer);
@@ -124,11 +128,13 @@ var Heatmap = /** @class */ (function () {
     Heatmap.prototype.drawData = function () {
         var gl = this.gl;
         // Draw the geometry
-        var numVerts = (this.width) * (this.height) * 6;
+        var numVerts = (this.width - 1) * (this.height) * 6;
         gl.drawArrays(gl.TRIANGLES, 0, numVerts);
     };
+    //Order 2 dimensional field to 1 dimensional, in same order as vertices are drawn
     Heatmap.prototype.interleave2d = function (arr) {
         var interleaved = [];
+        // console.log(arr);
         for (var i = 0; i < arr.length - 1; i++) {
             for (var j = 0; j < arr[0].length; j++) {
                 interleaved.push(arr[i + 1][j]);
@@ -141,6 +147,7 @@ var Heatmap = /** @class */ (function () {
         }
         return new Float32Array(interleaved);
     };
+    //Call to change values when the grid is not modified
     Heatmap.prototype.updateData = function (velocities, pressures) {
         this.velocityData = this.interleave2d(velocities);
         this.pressureData = this.interleave2d(pressures);
